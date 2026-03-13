@@ -10,15 +10,14 @@ export const metadata: Metadata = {
     "AI-powered property management platform for Washington D.C., Maryland, and Prince George's County. Legal compliance, lease review, and tenant management.",
 };
 
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() ?? "";
+// Placeholder used only when env is unset (e.g. Vercel build). Real key must be set in Vercel for auth to work.
+const clerkPublishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() || "pk_test_build_placeholder";
 
-// Only load Clerk when key is set — avoids "Missing publishableKey" during prerender/build when env is unset
-const ClerkRoot = clerkPublishableKey
-  ? dynamic(
-      () => import("./ClerkRoot").then((mod) => mod.ClerkRoot),
-      { ssr: true }
-    )
-  : null;
+const ClerkRoot = dynamic(
+  () => import("./ClerkRoot").then((mod) => mod.ClerkRoot),
+  { ssr: true }
+);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const content = (
@@ -29,9 +28,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 
-  if (ClerkRoot && clerkPublishableKey) {
-    return <ClerkRoot publishableKey={clerkPublishableKey}>{content}</ClerkRoot>;
-  }
-
-  return content;
+  return <ClerkRoot publishableKey={clerkPublishableKey}>{content}</ClerkRoot>;
 }
