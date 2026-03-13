@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextRequest, NextFetchEvent } from "next/server";
 
 const hasClerkKeys =
   typeof process.env.CLERK_SECRET_KEY === "string" &&
@@ -7,7 +7,7 @@ const hasClerkKeys =
   typeof process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === "string" &&
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.trim() !== "";
 
-export default async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (!hasClerkKeys) {
     return NextResponse.next();
   }
@@ -42,7 +42,7 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.next();
       }
     });
-    return await handler(request);
+    return await handler(request, event);
   } catch {
     return NextResponse.next();
   }
