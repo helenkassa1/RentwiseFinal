@@ -1,8 +1,8 @@
-import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Shield, Bell } from "lucide-react";
 import { AIDisclaimerBar } from "@/components/ai-disclaimer-bar";
 import { DashboardNav } from "@/components/portal/DashboardNav";
+import { DashboardHeaderAuth } from "@/components/portal/DashboardHeaderAuth";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link href="/dashboard/notifications">
               <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground" />
             </Link>
-            <UserButton afterSignOutUrl="/" />
+            <DashboardHeaderAuth />
           </div>
         </header>
 
