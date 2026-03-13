@@ -20,7 +20,7 @@ const landlordPmLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/properties", label: "Properties", icon: Building2 },
   { href: "/dashboard/leases", label: "Leases", icon: FileText },
-  { href: "/dashboard/lease-review", label: "Lease Review", icon: Scale },
+  { href: "/lease-review", label: "Lease Review", icon: Scale },
   { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/dashboard/inspections", label: "Inspections", icon: ClipboardCheck },
   { href: "/dashboard/tenants", label: "Tenants", icon: Users },

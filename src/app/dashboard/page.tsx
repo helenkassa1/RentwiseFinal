@@ -189,7 +189,7 @@ export default function DashboardPage() {
                   </div>
                 </button>
               </Link>
-              <Link href="/dashboard/lease-review">
+              <Link href="/lease-review">
                 <button className="w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted/50">
                   <div className="font-semibold">Create / review lease</div>
                   <div className="text-xs text-muted-foreground">
