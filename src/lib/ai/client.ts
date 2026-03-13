@@ -8,13 +8,18 @@ import { eq } from "drizzle-orm";
 // AI Client - Anthropic Primary, OpenAI Fallback
 // ============================================
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Lazy init so build succeeds when env vars are not set (e.g. Vercel build)
+function getAnthropic() {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  });
+}
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAI(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key || typeof key !== "string" || key.trim() === "") return null;
+  return new OpenAI({ apiKey: key });
+}
 
 export type AIResponse = {
   content: string;
@@ -35,6 +40,7 @@ export async function callAI(
 
   // Try Anthropic first
   try {
+    const anthropic = getAnthropic();
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
@@ -56,7 +62,11 @@ export async function callAI(
   } catch (error) {
     console.error("Anthropic API error, falling back to OpenAI:", error);
 
-    // Fallback to OpenAI
+    // Fallback to OpenAI (only if key is set)
+    const openai = getOpenAI();
+    if (!openai) {
+      throw new Error("AI service temporarily unavailable. Please try again later.");
+    }
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",

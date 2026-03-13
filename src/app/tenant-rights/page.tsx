@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Shield, MapPin, AlertCircle, Send, MessageCircle } from "lucide-react";
 import {
@@ -279,8 +280,10 @@ function TenantRightsContent() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-14 items-center gap-2 px-4">
-          <Shield className="h-6 w-6 text-primary" aria-hidden />
-          <span className="font-semibold">RentWise</span>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-90">
+            <Shield className="h-6 w-6 text-primary" aria-hidden />
+            <span className="font-semibold">RentWise</span>
+          </Link>
           <span className="text-muted-foreground">|</span>
           <span className="text-sm text-muted-foreground">Tenant Rights</span>
         </div>
