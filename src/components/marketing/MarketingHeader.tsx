@@ -21,7 +21,7 @@ export function MarketingHeader() {
             Home
           </Link>
           <Link
-            href="/services"
+            href="/pricing"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Services
