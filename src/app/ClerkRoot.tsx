@@ -6,15 +6,8 @@ export function ClerkRoot({
   publishableKey,
   children,
 }: {
-  publishableKey?: string;
+  publishableKey: string;
   children: React.ReactNode;
 }) {
-  // Resolve key at runtime: prefer the prop, fall back to the env var
-  const key = publishableKey || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
-
-  if (!key) {
-    return <>{children}</>;
-  }
-
-  return <ClerkProvider publishableKey={key}>{children}</ClerkProvider>;
+  return <ClerkProvider publishableKey={publishableKey}>{children}</ClerkProvider>;
 }
