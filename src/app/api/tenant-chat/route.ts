@@ -36,7 +36,7 @@ async function fetchStatutesForJurisdiction(jurisdiction: "dc" | "pg" | null): P
     const rows = await db
       .select({ code: legalStatutes.code, title: legalStatutes.title, summary: legalStatutes.summary })
       .from(legalStatutes)
-      .where(inArray(legalStatutes.jurisdiction, jurisdictions));
+      .where(inArray(legalStatutes.jurisdiction, [...jurisdictions]));
     if (rows.length === 0) return "";
     return rows
       .map((r) => `Code: ${r.code}\nTitle: ${r.title}\nSummary: ${r.summary}`)
