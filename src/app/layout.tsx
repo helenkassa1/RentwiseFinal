@@ -10,25 +10,17 @@ export const metadata: Metadata = {
     "AI-powered property management platform for Washington D.C., Maryland, and Prince George's County. Legal compliance, lease review, and tenant management.",
 };
 
-// Only wrap in Clerk when a real key is set (avoids invalid key error during build when env is unset)
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() ?? "";
-
-const ClerkRoot =
-  clerkPublishableKey.length > 0
-    ? dynamic(() => import("./ClerkRoot").then((mod) => mod.ClerkRoot), { ssr: true })
-    : null;
+// Always load ClerkRoot — it handles missing keys gracefully at runtime
+const ClerkRoot = dynamic(() => import("./ClerkRoot").then((mod) => mod.ClerkRoot), { ssr: true });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const content = (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
-      </body>
-    </html>
+  return (
+    <ClerkRoot>
+      <html lang="en" suppressHydrationWarning>
+        <body className="font-sans antialiased">
+          <Providers>{children}</Providers>
+        </body>
+      </html>
+    </ClerkRoot>
   );
-
-  if (ClerkRoot && clerkPublishableKey) {
-    return <ClerkRoot publishableKey={clerkPublishableKey}>{content}</ClerkRoot>;
-  }
-  return content;
 }

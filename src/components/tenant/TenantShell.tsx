@@ -6,10 +6,6 @@ import { Home, CreditCard, FileText, Wrench, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { UserButton } from "@clerk/nextjs";
 
-const hasClerkKey =
-  typeof process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === "string" &&
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.trim() !== "";
-
 const navItems = [
   { href: "/tenant", label: "Home", icon: Home },
   { href: "/tenant/payments", label: "Payments", icon: CreditCard },
@@ -46,13 +42,7 @@ export function TenantShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          {hasClerkKey ? (
-            <UserButton afterSignOutUrl="/" />
-          ) : (
-            <Link href="/sign-in" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-              Sign In
-            </Link>
-          )}
+          <UserButton afterSignOutUrl="/" />
         </div>
       </header>
       <main className="container mx-auto px-4 py-6">{children}</main>

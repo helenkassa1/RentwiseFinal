@@ -13,70 +13,8 @@ import {
 import { Menu, ChevronDown, Shield } from "lucide-react";
 import { useState } from "react";
 
-const hasClerkKey =
-  typeof process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === "string" &&
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.trim() !== "";
 
-function StaticNav() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  return (
-    <nav className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-            <Shield className="h-7 w-7" aria-hidden />
-            RentWise
-          </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/lease-review" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Lease Review Tool
-            </Link>
-            <Link href="/tenant-rights" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Landlord/Tenant Rights Assistant
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Pricing
-            </Link>
-            <Button variant="ghost" asChild>
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Create Account</Link>
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden mt-4 flex flex-col gap-4 pb-4">
-            <Link href="/lease-review" className="text-sm font-medium hover:text-primary" onClick={() => setMobileMenuOpen(false)}>
-              Lease Review Tool
-            </Link>
-            <Link href="/tenant-rights" className="text-sm font-medium hover:text-primary" onClick={() => setMobileMenuOpen(false)}>
-              Landlord/Tenant Rights Assistant
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium hover:text-primary" onClick={() => setMobileMenuOpen(false)}>
-              Pricing
-            </Link>
-            <Link href="/sign-in" className="text-sm" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-            <Button asChild>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>Create Account</Link>
-            </Button>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-}
-
-function MainNavWithClerk() {
+function MainNavInner() {
   const { isSignedIn, user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -196,8 +134,5 @@ function MainNavWithClerk() {
 }
 
 export function MainNav() {
-  if (!hasClerkKey) {
-    return <StaticNav />;
-  }
-  return <MainNavWithClerk />;
+  return <MainNavInner />;
 }
