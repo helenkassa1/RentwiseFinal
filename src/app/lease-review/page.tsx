@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/shared";
 import {
-  Shield,
   FileText,
   Loader2,
   ArrowRight,
@@ -31,6 +30,7 @@ import {
   ConfidenceBadge,
   PerSuggestionDisclaimer,
 } from "@/components/ai-disclaimer-bar";
+import { MainNav } from "@/components/navigation/main-nav";
 import type { LeaseReviewResult } from "@/lib/db/schema";
 
 type ReviewSummary = {
@@ -338,22 +338,7 @@ export default function PublicLeaseReviewPage() {
   if (!results) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <header className="border-b bg-white dark:bg-zinc-900 dark:border-zinc-800">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <Link href="/" className="flex items-center gap-3">
-              <Shield className="h-9 w-9 text-primary shrink-0" aria-hidden />
-              <span className="text-2xl font-bold tracking-tight text-foreground">RentWise</span>
-            </Link>
-            <div className="flex gap-3">
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm">Sign In</Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button size="sm">Get Started</Button>
-              </Link>
-            </div>
-          </div>
-        </header>
+        <MainNav />
 
         <div className="container mx-auto max-w-4xl px-4 py-12">
           <div className="mb-8 text-center">
@@ -459,18 +444,7 @@ export default function PublicLeaseReviewPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
-      <header className="border-b bg-white dark:bg-zinc-900 dark:border-zinc-800 shrink-0">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-3">
-            <Shield className="h-9 w-9 text-primary shrink-0" aria-hidden />
-            <span className="text-2xl font-bold tracking-tight text-foreground">RentWise</span>
-          </Link>
-          <div className="flex gap-2">
-            <Link href="/sign-in"><Button variant="ghost" size="sm">Sign In</Button></Link>
-            <Link href="/sign-up"><Button size="sm">Get Started</Button></Link>
-          </div>
-        </div>
-      </header>
+      <MainNav />
 
       {/* Compliance summary bar */}
       <div className="border-b bg-white dark:bg-zinc-900 dark:border-zinc-800 px-4 py-3 shrink-0">
