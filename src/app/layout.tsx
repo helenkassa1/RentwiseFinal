@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import "./globals.css";
 import { Providers } from "./providers";
+
+// Force all pages to render at runtime so ClerkProvider is always available
+export const dynamic = "force-dynamic";
 
 // Font: --font-inter is set in globals.css (system stack) so build does not require Google Fonts.
 export const metadata: Metadata = {
@@ -11,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 // Always load ClerkRoot — it handles missing keys gracefully at runtime
-const ClerkRoot = dynamic(() => import("./ClerkRoot").then((mod) => mod.ClerkRoot), { ssr: true });
+const ClerkRoot = nextDynamic(() => import("./ClerkRoot").then((mod) => mod.ClerkRoot), { ssr: true });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
