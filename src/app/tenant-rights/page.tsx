@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Shield, MapPin, AlertCircle } from "lucide-react";
+import { Shield, MapPin, AlertCircle, Send, MessageCircle } from "lucide-react";
 import {
   COMMON_TOPICS,
   TOPICS,
@@ -134,6 +134,15 @@ function TenantRightsContent() {
   const [chatLoading, setChatLoading] = useState(false);
 
   const detailsRef = useRef<HTMLDivElement | null>(null);
+  const helpSectionRef = useRef<HTMLElement | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [chatMessages, chatLoading]);
 
   useEffect(() => {
     const j = loadJurisdiction();
@@ -207,12 +216,17 @@ function TenantRightsContent() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Request failed");
-      setChatMessages((m) => [...m, { role: "assistant", content: data.content }]);
-    } catch {
+      if (!res.ok) {
+        const serverMessage = typeof data.error === "string" ? data.error : "Request failed";
+        setChatMessages((m) => [...m, { role: "assistant", content: `${serverMessage} ${DISCLAIMER}` }]);
+        return;
+      }
+      setChatMessages((m) => [...m, { role: "assistant", content: data.content ?? "I couldn't generate a response. Please try again." }]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
       setChatMessages((m) => [
         ...m,
-        { role: "assistant", content: `Sorry, I couldn't get a response. Please try again. ${DISCLAIMER}` },
+        { role: "assistant", content: `Sorry, I couldn't get a response. ${message} ${DISCLAIMER}` },
       ]);
     } finally {
       setChatLoading(false);
@@ -298,34 +312,66 @@ function TenantRightsContent() {
             </div>
           </div>
 
-          {/* Help box */}
+          {/* Chat-style help box */}
           <section
-            className="rounded-2xl border bg-card p-4 sm:p-5"
+            ref={helpSectionRef}
+            className="rounded-2xl border bg-card overflow-hidden flex flex-col"
             aria-labelledby="help-heading"
           >
-            <h2 id="help-heading" className="text-lg font-semibold">Ask for help (optional)</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Example: &quot;My landlord won&apos;t fix mold and I&apos;m not sure what to do.&quot;</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
-              <textarea
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Describe your problem. Include dates, notices, and what you want to happen."
-                className="min-h-[110px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
-                aria-label="Describe your problem"
-                disabled={chatLoading}
-              />
-              <button
-                type="button"
-                onClick={startChat}
-                disabled={!question.trim() || chatLoading}
+            <div className="border-b bg-muted/30 px-4 py-3">
+              <h2 id="help-heading" className="text-lg font-semibold flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" aria-hidden />
+                Ask for help (optional)
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Describe your situation. I&apos;ll ask a few questions and give step-by-step guidance for your area.
+              </p>
+            </div>
+            <div className="px-4 py-2 flex items-start gap-2 border-b bg-amber-50/80 text-amber-900">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" aria-hidden />
+              <p className="text-xs text-amber-900/90">{DISCLAIMER}</p>
+            </div>
+            <div
+              ref={chatScrollRef}
+              className="flex flex-col min-h-[200px] max-h-[420px] overflow-y-auto p-4 space-y-4"
+            >
+              {chatMessages.length === 0 && !chatLoading && (
+                <p className="text-sm text-muted-foreground">
+                  Example: &quot;My landlord won&apos;t fix mold and I&apos;m not sure what to do.&quot; Type below or pick a prompt.
+                </p>
+              )}
+              {chatMessages.map((msg, i) => (
+              <div
+                key={i}
                 className={cx(
-                  "rounded-xl border border-primary bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  "flex",
+                  msg.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {chatLoading ? "Sending…" : "Get Help"}
-              </button>
+                <div
+                  className={cx(
+                    "max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
+                    msg.role === "user"
+                      ? "rounded-br-md bg-primary text-primary-foreground"
+                      : "rounded-bl-md bg-muted border border-border"
+                  )}
+                >
+                  {msg.role === "assistant" && (
+                    <span className="block text-xs font-medium text-muted-foreground mb-1.5">Tenant Rights Guide</span>
+                  )}
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md bg-muted border border-border px-4 py-2.5 text-sm text-muted-foreground">
+                  Thinking…
+                </div>
+              </div>
+            )}
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="px-4 pt-2 flex flex-wrap gap-2 border-t bg-muted/20">
               {QUICK_PROMPTS.map((chip) => (
                 <button
                   key={chip}
@@ -337,26 +383,29 @@ function TenantRightsContent() {
                 </button>
               ))}
             </div>
-            {chatMessages.length > 0 && (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-xl border bg-muted/30 p-2">
-                  <p className="text-xs font-medium text-muted-foreground">{DISCLAIMER}</p>
-                </div>
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={cx(
-                      "rounded-xl border p-3 text-sm",
-                      msg.role === "user"
-                        ? "ml-4 border-primary/30 bg-primary/10"
-                        : "mr-4 bg-muted/50"
-                    )}
-                  >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                  </div>
-                ))}
+            <div className="p-4 border-t bg-background">
+              <div className="flex gap-2 items-end">
+                <textarea
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder={chatMessages.length > 0 ? "Type a follow-up…" : "Describe your problem. Include dates, notices, and what you want to happen."}
+                  className="min-h-[44px] max-h-32 flex-1 rounded-xl border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 resize-none"
+                  aria-label="Your message"
+                  disabled={chatLoading}
+                  rows={chatMessages.length > 0 ? 1 : 3}
+                />
+                <button
+                  type="button"
+                  onClick={startChat}
+                  disabled={!question.trim() || chatLoading}
+                  className="shrink-0 rounded-xl bg-primary px-4 py-2.5 text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center gap-2 h-[44px]"
+                  aria-label="Send"
+                >
+                  <Send className="h-4 w-4" aria-hidden />
+                  {chatMessages.length === 0 ? "Get Help" : "Send"}
+                </button>
               </div>
-            )}
+            </div>
           </section>
         </div>
 
@@ -406,6 +455,7 @@ function TenantRightsContent() {
                 jurisdiction={jurisdiction}
                 onOpenChat={(prompt) => {
                   if (prompt) setQuestion(prompt);
+                  helpSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
                 scrollRef={undefined}
               />
