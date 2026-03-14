@@ -104,10 +104,10 @@ function MainNavWithClerk() {
   // Detect tenant role and route Dashboard link accordingly
   useEffect(() => {
     if (!isSignedIn) return;
-    fetch("/api/tenant/my-home")
+    fetch("/api/dashboard/portal")
       .then((res) => res.json())
       .then((data) => {
-        if (data.linked) {
+        if (data.role === "tenant") {
           setDashboardHref("/tenant");
         }
       })
