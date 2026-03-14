@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PortalHeader } from "@/components/portal/PortalHeader";
 import {
   getPropertyAttentionStatus,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, FileText, Wrench, Search } from "lucide-react";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [role, setRole] = useState<UserRole>("landlord");
   const [summary, setSummary] = useState<{
     openMaintenance: number;
@@ -28,13 +30,18 @@ export default function DashboardPage() {
     fetch("/api/dashboard/portal")
       .then((res) => res.json())
       .then((data) => {
+        // Redirect tenants to their own portal
+        if (data.role === "tenant") {
+          router.replace("/tenant");
+          return;
+        }
         if (data.role) setRole(data.role);
         if (data.summary) setSummary(data.summary);
         if (Array.isArray(data.properties)) setProperties(data.properties);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const computed = useMemo(() => {
     const withStatus = properties.map((p) => ({
@@ -60,37 +67,6 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
-
-  if (role === "tenant") {
-    return (
-      <div className="space-y-6">
-        <PortalHeader role="tenant" />
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold">Your rental</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              View your unit, lease, and submit maintenance requests from the
-              links below.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/dashboard/maintenance">
-                <Button variant="outline">
-                  <Wrench className="mr-2 h-4 w-4" />
-                  Submit maintenance request
-                </Button>
-              </Link>
-              <Link href="/dashboard/leases">
-                <Button variant="outline">
-                  <FileText className="mr-2 h-4 w-4" />
-                  My lease
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }

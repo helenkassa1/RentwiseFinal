@@ -14,6 +14,9 @@ import {
   Users,
   Settings,
   Briefcase,
+  Home,
+  CreditCard,
+  MessageSquare,
 } from "lucide-react";
 
 const landlordPmLinks = [
@@ -29,11 +32,11 @@ const landlordPmLinks = [
 ];
 
 const tenantLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/dashboard/leases", label: "My lease", icon: FileText },
-  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/tenant", label: "My Home", icon: Home },
+  { href: "/tenant/payments", label: "Payments", icon: CreditCard },
+  { href: "/tenant/lease", label: "Lease & Rights", icon: FileText },
+  { href: "/tenant/requests", label: "Requests", icon: Wrench },
+  { href: "/tenant/messages", label: "Messages", icon: MessageSquare },
 ];
 
 export function DashboardNav() {
