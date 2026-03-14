@@ -62,3 +62,16 @@
 .ai-disclaimer-bar {
   @apply bg-amber-50 border-t border-amber-200 text-amber-800 text-xs py-2 px-4 text-center;
 }
+
+/* Lease review: pulse animation when scrolling to a clause */
+@keyframes clause-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  25% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+  75% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+.animate-clause-pulse {
+  animation: clause-pulse 1.8s ease-out;
+  border-radius: 2px;
+}

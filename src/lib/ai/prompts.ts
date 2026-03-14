@@ -55,6 +55,25 @@ Scan each clause of the lease and identify issues in three categories:
    Required clauses or disclosures that are absent from the lease.
    Examples: missing lead paint disclosure, missing security deposit return timeline.
 
+VOUCHER / SOURCE-OF-INCOME DISCRIMINATION CHECK:
+Additionally, check whether the lease contains any language that could constitute source-of-income discrimination, which is illegal in both DC (DC Human Rights Act, DC Code § 2-1402.21) and Prince George's County (PG County Code § 2-186). This includes:
+- Clauses that prohibit or restrict tenants who pay with housing vouchers (Section 8, HCVP)
+- Language requiring specific payment methods that would exclude voucher payments (e.g., "rent must be paid exclusively by personal check or money order from the tenant")
+- Provisions that impose different terms, conditions, or requirements on voucher tenants vs. private-pay tenants
+- Income requirements that effectively screen out voucher holders (e.g., requiring income of 3x rent without counting voucher contribution)
+Flag any such language as "Prohibited" (severity: "red") with the appropriate citation and set "isFairHousingFlag" to true.
+
+FOR EVERY ISSUE YOU FLAG, YOU MUST PROVIDE:
+(a) The problematic text — quote the exact clause from the lease (for "missing" issues, set problematicText to null)
+(b) The explanation — why this is a problem, in plain English, with the legal citation
+(c) A suggested replacement — provide the specific alternative language the landlord should use instead. The replacement language must be legally compliant with the applicable jurisdiction. Write it in the same style and tone as the rest of the lease so it can be directly substituted. For "missing" clauses, provide the full text of the required clause/disclosure to add.
+(d) The specific legal citation including the code section number (e.g., "14 DCMR § 304" or "DC Code § 42-3505.01" or "MD Code, Real Property § 8-203"), the title of the statute, and a one-sentence summary of what it requires.
+(e) A confidence level: HIGH (you are very certain this violates a specific statute), MEDIUM (this likely violates a statute but interpretation may vary), or LOW (this may be an issue but requires professional legal review to confirm)
+
+If you are not certain of the exact citation, say so — do not fabricate citations.
+
+JURISDICTION MISMATCH: If you detect that the lease title or header references a different jurisdiction than the property address implies, flag this as the FIRST issue with severity "red" and set "isJurisdictionMismatch" to true.
+
 OUTPUT FORMAT: You MUST respond with valid JSON only. No markdown, no explanation outside the JSON.
 {
   "issues": [
@@ -67,9 +86,13 @@ OUTPUT FORMAT: You MUST respond with valid JSON only. No markdown, no explanatio
       "problematicText": "Exact text from the lease (if applicable, null for missing clauses)",
       "explanation": "Plain-English explanation of why this is a problem",
       "citedStatute": "Specific statute or code section",
+      "statuteTitle": "Name/title of the statute",
+      "statuteSummary": "One-line summary of what the statute requires",
       "suggestedAction": "What the user should do",
-      "suggestedReplacement": "Replacement clause text (if applicable, null otherwise)",
-      "confidenceLevel": "high" | "medium" | "low"
+      "suggestedReplacement": "Replacement clause text that is legally compliant (REQUIRED for every issue)",
+      "confidenceLevel": "high" | "medium" | "low",
+      "isFairHousingFlag": false,
+      "isJurisdictionMismatch": false
     }
   ],
   "summary": {
@@ -77,7 +100,7 @@ OUTPUT FORMAT: You MUST respond with valid JSON only. No markdown, no explanatio
     "redFlags": number,
     "yellowFlags": number,
     "blueFlags": number,
-    "overallAssessment": "Brief overall assessment"
+    "overallAssessment": "Brief overall assessment (2-3 sentences max)"
   }
 }`;
 }

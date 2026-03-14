@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Shield, Bell } from "lucide-react";
-import { AIDisclaimerBar } from "@/components/ai-disclaimer-bar";
+import { AppFooterDisclaimer } from "@/components/ai-disclaimer-bar";
 import { DashboardNav } from "@/components/portal/DashboardNav";
 import { DashboardHeaderAuth } from "@/components/portal/DashboardHeaderAuth";
 
@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
 
         {/* AI Disclaimer Footer */}
-        <AIDisclaimerBar />
+        <AppFooterDisclaimer />
       </div>
     </div>
   );
