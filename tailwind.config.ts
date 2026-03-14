@@ -49,6 +49,10 @@ const config: Config = {
           yellow: "#f59e0b",
           blue: "#3b82f6",
         },
+        navy: {
+          DEFAULT: "#1e3a5f",
+          dark: "#162d4a",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -56,7 +60,8 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "var(--font-inter)", "system-ui", "sans-serif"],
+        serif: ["'Instrument Serif'", "Georgia", "serif"],
       },
       fontSize: {
         xs: ["0.875rem", { lineHeight: "1.25rem" }], // min 14px
