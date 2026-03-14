@@ -140,13 +140,44 @@ export const FIELD_TIPS: Record<string, FieldTip> = {
     commonMistake: "Not setting up direct deposit. Paper checks can be delayed by mail and are harder to track.",
   },
 
+  // ── Pricing Strategy ──────────────────────────────────────────
+  pricingStrategy: {
+    title: "How to Set Your Rent (Pricing Strategy)",
+    tip: "Consider these factors when setting your proposed rent: (1) HUD Fair Market Rents (FMR) for your area — DC 2025-2026: Studio $1,672, 1BR $1,742, 2BR $2,001, 3BR $2,575, 4BR $2,817. (2) Comparable unassisted rents in your neighborhood — check Zillow, Rentometer, or recent leases. (3) Unit condition and amenities — updated kitchens, in-unit laundry, parking, and central A/C justify higher rents. (4) Utility inclusion — if you include utilities, the gross rent is higher but the agency deducts a utility allowance from the tenant's share. Setting rent at or slightly below 110% of FMR speeds up approval.",
+    commonMistake: "Pricing significantly above FMR without justification. The agency will request a rent reduction or conduct a lengthy rent reasonableness study, delaying approval by 2-4 weeks.",
+    dchaRequirement: "Rent must pass the agency's rent reasonableness test. They compare your proposed rent to at least 3 comparable unassisted units of similar size, type, location, amenities, and condition.",
+  },
+
+  // ── Lead Assessment Guidance ─────────────────────────────────
+  leadAssessment: {
+    title: "Lead-Based Paint: What You Need to Know",
+    tip: "If your property was built before 1978, federal law (24 CFR 35) requires lead-based paint disclosure. Here's what to do: (1) Get a lead inspection from a licensed/certified inspector — costs ~$300-500 for a typical unit. (2) If lead is found, you must either abate it (remove/encapsulate) or provide a risk assessment showing it's stable. (3) DC also requires a lead-free certificate under DC Code 8-231.01 for any unit housing children under 6. (4) HUD's free online Visual Assessment Training is strongly recommended — print the certificate. (5) Keep records: inspection reports are valid for the life of the property unless painted surfaces are disturbed.",
+    commonMistake: "Assuming you don't need a lead inspection because the unit 'looks fine.' Visual assessments alone are not sufficient — only certified lab results count. Also, renovating a pre-1978 property requires EPA RRP-certified contractors.",
+    dchaRequirement: "The housing authority will NOT approve tenancy for pre-1978 properties without valid lead documentation. This is the #1 reason for RFTA packet rejections.",
+  },
+
+  // ── Business License ─────────────────────────────────────────
+  businessLicense: {
+    title: "Business License Requirement",
+    tip: "DC requires all landlords to hold a valid Basic Business License (BBL) with a 'Housing: Rental' endorsement. Apply online at mybusiness.dc.gov — you'll need your property address, Certificate of Occupancy, and Clean Hands certification. Processing takes ~10 business days. PG County requires a rental license from DPIE. In both jurisdictions, operating without a license is a code violation and can result in fines.",
+    commonMistake: "Trying to submit an RFTA without a valid license. The housing authority may reject your packet or delay processing until you provide proof of licensure.",
+  },
+
+  // ── HQS Inspection Prep ──────────────────────────────────────
+  hqsInspectionPrep: {
+    title: "Preparing for HQS Inspection",
+    tip: "The HQS inspection is the most common point of failure. While waiting for your appointment: (1) Walk every room and check all items on the HQS checklist in Step 6. (2) Most common failures: missing/broken smoke detectors, peeling paint, missing outlet covers, non-functional windows, plumbing leaks, and missing handrails. (3) All utilities must be ON during inspection. (4) Unit must be vacant, clean, and free of debris. (5) All construction/rehab must be 100% complete. (6) If you fail, you'll get a deficiency list but must wait for a re-inspection, adding 2-4 weeks.",
+    commonMistake: "Assuming minor issues won't matter. Inspectors check every detail — a missing GFCI outlet in a bathroom or kitchen can fail the entire inspection.",
+    dchaRequirement: "Inspectors follow HUD's Housing Quality Standards (24 CFR 982.401). There are 13 performance areas and ALL must pass. No partial passes.",
+  },
+
   // ── General Process Tips ───────────────────────────────────────
   overviewTimeline: {
-    title: "DCHA RTA Timeline",
-    tip: "Typical timeline: Submit RTA (Day 1) → DCHA reviews rent reasonableness (Days 3-10) → HQS inspection scheduled (Days 10-20) → Approval or corrections needed (Days 20-30) → HAP contract executed (Days 25-35). Total: approximately 4-6 weeks from submission to first HAP payment.",
+    title: "Full Lease-Up Timeline",
+    tip: "Typical timeline: Get business license + create portal account (before Day 1) → Submit RFTA (Day 1) → Agency reviews rent reasonableness (Days 3-10) → Use this time to prep unit with HQS checklist → HQS inspection scheduled (Days 10-20) → Approval or corrections needed (Days 20-30) → HAP contract executed (Days 25-35). Total: approximately 4-6 weeks from submission to first HAP payment.",
   },
   overviewDocuments: {
     title: "Documents You'll Need",
-    tip: "Before starting, gather: (1) Property deed or LLC documentation, (2) W-9 form, (3) Valid lead inspection report (if pre-1978), (4) Proof of ownership or management authority, (5) Current insurance documentation, (6) Tenant's voucher information packet.",
+    tip: "Before starting, gather: (1) Valid business/rental license, (2) Property deed or LLC documentation, (3) W-9 form, (4) Valid lead inspection report (if pre-1978), (5) Proof of ownership or management authority, (6) Current insurance documentation, (7) Tenant's voucher information packet.",
   },
 };

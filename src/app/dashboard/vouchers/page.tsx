@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
   Download,
   ExternalLink,
@@ -17,6 +18,7 @@ import {
   Save,
   Shield,
   ShieldAlert,
+  Sparkles,
   User,
   Zap,
   AlertTriangle,
@@ -176,35 +178,64 @@ const FUEL_TYPES = [
 function TipPanel({ tip, onClose, jurisdiction }: { tip: FieldTip | null; onClose: () => void; jurisdiction: Jurisdiction }) {
   const agencyName = jurisdiction === "dc" ? "DCHA" : "HAPGC";
   if (!tip) return (
-    <div className="bg-gradient-to-b from-blue-50 to-white rounded-2xl border border-blue-100 p-6 text-center">
-      <Lightbulb className="w-8 h-8 text-blue-300 mx-auto" />
-      <p className="text-sm text-slate-500 mt-3">Click the <Info className="w-3.5 h-3.5 inline text-blue-500" /> icon next to any field for AI-powered guidance.</p>
-      <p className="text-xs text-slate-400 mt-2">Tips include {agencyName}-specific requirements and common mistakes.</p>
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-300" />
+          <span className="text-sm font-semibold text-white">AI Guidance</span>
+        </div>
+      </div>
+      <div className="px-4 py-8 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto">
+          <Info className="w-6 h-6 text-slate-300" />
+        </div>
+        <p className="text-sm font-medium text-slate-600 mt-3">Field-by-field guidance</p>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-[200px] mx-auto">
+          Click the <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[9px] font-bold mx-0.5">i</span> icon next to any field to get {agencyName}-specific requirements and common mistakes.
+        </p>
+      </div>
     </div>
   );
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white rounded-2xl border border-blue-200 p-5 shadow-sm">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center"><Lightbulb className="w-4 h-4 text-blue-600" /></div>
-          <h4 className="text-sm font-bold text-slate-900">AI Guidance</h4>
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-300" />
+            <span className="text-sm font-semibold text-white">AI Guidance</span>
+          </div>
+          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
       </div>
-      <p className="text-sm font-semibold text-slate-800 mb-2">{tip.title}</p>
-      <p className="text-sm text-slate-600 leading-relaxed">{tip.tip}</p>
-      {tip.commonMistake && (
-        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <p className="text-xs font-semibold text-amber-700 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Common Mistake</p>
-          <p className="text-xs text-amber-600 mt-1 leading-relaxed">{tip.commonMistake}</p>
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs font-bold text-[#1e3a5f] uppercase tracking-wider">Guidance</span>
         </div>
-      )}
-      {tip.dchaRequirement && (
-        <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs font-semibold text-blue-700 flex items-center gap-1"><Shield className="w-3 h-3" /> {agencyName} Requirement</p>
-          <p className="text-xs text-blue-600 mt-1 leading-relaxed">{tip.dchaRequirement}</p>
-        </div>
-      )}
+        <p className="text-sm font-semibold text-slate-800 mb-2">{tip.title}</p>
+        <p className="text-sm text-slate-700 leading-relaxed">{tip.tip}</p>
+        {tip.commonMistake && (
+          <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-red-700">Common Mistake</p>
+                <p className="text-xs text-red-700 mt-1 leading-relaxed">{tip.commonMistake}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {tip.dchaRequirement && (
+          <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-amber-700">{agencyName} Requirement</p>
+                <p className="text-xs text-amber-700 mt-1 leading-relaxed">{tip.dchaRequirement}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -294,74 +325,126 @@ export default function VouchersPage() {
     }
   };
 
+  const progressPercent = Math.round(((stepIdx + 1) / STEPS.length) * 100);
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/dashboard" className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-          <ArrowLeft className="w-4 h-4 text-slate-600" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-slate-900">Section 8 Voucher Application</h1>
-          <p className="text-sm text-slate-500">HUD Form 52517 &mdash; Request for Tenancy Approval ({agencyName})</p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <span className={`px-2.5 py-1 rounded-full font-semibold ${isDC ? "bg-blue-100 text-blue-700" : "bg-violet-100 text-violet-700"}`}>
-            <MapPin className="w-3 h-3 inline -mt-0.5 mr-1" />{isDC ? "DC / DCHA" : "PG County / HAPGC"}
-          </span>
-        </div>
-      </div>
-
-      {/* Stepper */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max">
-          {STEPS.map((s, i) => {
-            const isActive = s.key === step;
-            const isPast = i < stepIdx;
-            return (
-              <div key={s.key} className="flex items-center">
-                <button onClick={() => goTo(s.key)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${isActive ? "bg-blue-600 text-white shadow-sm" : isPast ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"}`}>
-                  {isPast ? <CheckCircle2 className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{s.label}</span>
-                  <span className="sm:hidden">{i + 1}</span>
-                </button>
-                {i < STEPS.length - 1 && <div className={`w-6 h-px mx-1 ${isPast ? "bg-emerald-300" : "bg-slate-200"}`} />}
-              </div>
-            );
-          })}
+    <div className="min-h-screen bg-slate-50">
+      {/* ═══ PAGE HEADER ═══ */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+              <ArrowLeft className="w-4 h-4 text-slate-500" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-slate-900">Section 8 Voucher Application</h1>
+              <p className="text-xs text-slate-500 mt-0.5">HUD Form 52517 &mdash; Request for Tenancy Approval ({agencyName})</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+            <MapPin className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-xs font-semibold text-blue-700">{isDC ? "DC / DCHA" : "PG County / HAPGC"}</span>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ═══ STEP PROGRESS BAR ═══ */}
+      <div className="border-b border-slate-200 bg-white px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center overflow-x-auto py-3 gap-1 scrollbar-none">
+            {STEPS.map((s, i) => {
+              const isActive = s.key === step;
+              const isPast = i < stepIdx;
+              return (
+                <div key={s.key} className="flex items-center flex-shrink-0">
+                  <button onClick={() => goTo(s.key)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                      isActive
+                        ? "bg-[#1e3a5f] text-white font-semibold"
+                        : isPast
+                          ? "text-emerald-600 hover:bg-emerald-50"
+                          : "text-slate-500 hover:bg-slate-50"
+                    }`}>
+                    {isPast ? (
+                      <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      </span>
+                    ) : isActive ? (
+                      <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                    ) : (
+                      <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">{i + 1}</span>
+                    )}
+                    <span className="hidden sm:inline">{s.label}</span>
+                  </button>
+                  {i < STEPS.length - 1 && <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0 mx-0.5" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-slate-100 -mx-6">
+          <div className="h-full bg-[#1e3a5f] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+        </div>
+      </div>
+
+      {/* ═══ TWO-COLUMN CONTENT ═══ */}
+      <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content — 2 of 3 columns */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8">{renderStep()}</div>
-          <div className="flex items-center justify-between mt-4">
-            <button onClick={back} disabled={!canBack} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${canBack ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-slate-50 text-slate-300 cursor-not-allowed"}`}>
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-            <div className="flex items-center gap-2">
-              <button onClick={saveDraft} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                <Save className="w-4 h-4" /> {saved ? "Saved!" : "Save Draft"}
-              </button>
-              {canNext ? (
-                <button onClick={next} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors">Next <ArrowRight className="w-4 h-4" /></button>
-              ) : (
-                <button onClick={() => { try { const doc = generateRFTAPdf(form); doc.save(`RFTA-Packet-${form.ownerName?.replace(/\s+/g, "-") || "draft"}-${new Date().toISOString().slice(0, 10)}.pdf`); } catch(e) { console.error(e); } }} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                  <Download className="w-4 h-4" /> Download RFTA
+        </div>
+
+        {/* AI Guidance panel — 1 of 3 columns */}
+        <div className="hidden lg:block lg:col-span-1">
+          <div className="sticky top-24">
+            <TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} />
+            {/* Progress summary below guidance */}
+            <div className="mt-4 bg-slate-50 rounded-xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-600">Application Progress</span>
+                <span className="text-xs text-slate-400">Step {stepIdx + 1} of {STEPS.length}</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-1.5">
+                <div className="bg-[#1e3a5f] h-1.5 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <button onClick={saveDraft} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors">
+                  <Save className="w-3.5 h-3.5" />
+                  {saved ? "Saved!" : "Save Draft"}
                 </button>
-              )}
+                <span className="text-[10px] text-slate-400">Auto-saves as you go</span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="hidden lg:block">
-          <div className="sticky top-24">
-            <TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} />
+      </div>
+      {currentTip && <div className="lg:hidden px-6 mb-4"><TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} /></div>}
+
+      {/* ═══ BOTTOM NAVIGATION BAR ═══ */}
+      <div className="border-t border-slate-200 bg-white px-6 py-4 sticky bottom-0 z-10">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <button onClick={back} disabled={!canBack}
+            className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors ${canBack ? "text-slate-500 hover:text-slate-700 hover:bg-slate-50" : "text-slate-300 cursor-not-allowed"}`}>
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={saveDraft} className="flex items-center gap-2 text-sm text-slate-600 font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+              <Save className="w-4 h-4" /> {saved ? "Saved!" : "Save Draft"}
+            </button>
+            {canNext ? (
+              <button onClick={next} className="flex items-center gap-2 bg-[#1e3a5f] hover:bg-[#162d4a] text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors">
+                Next <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={() => { try { const doc = generateRFTAPdf(form); doc.save(`RFTA-Packet-${form.ownerName?.replace(/\s+/g, "-") || "draft"}-${new Date().toISOString().slice(0, 10)}.pdf`); } catch(e) { console.error(e); } }}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors">
+                <Download className="w-4 h-4" /> Download RFTA
+              </button>
+            )}
           </div>
         </div>
       </div>
-      {currentTip && <div className="lg:hidden mt-4"><TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} /></div>}
     </div>
   );
 }
@@ -374,16 +457,21 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
   const isDC = jurisdiction === "dc";
 
   const dcTimeline = [
-    { step: "Submit RFTA Packet", days: "Day 1", desc: "Upload complete packet to DCHA Owner Portal (dcha.hcvportal.org)" },
-    { step: "Determining Eligibility", days: "~5 business days", desc: "DCHA verifies ownership, rent reasonableness, and tenant affordability" },
-    { step: "Scheduling Inspection", days: "~7 business days", desc: "DCHA schedules HQS inspection — unit must be rent-ready" },
-    { step: "Conducting Inspection", days: "~12 business days", desc: "Inspector evaluates unit per Housing Quality Standards" },
-    { step: "Processing HAP Contract", days: "~15 business days", desc: "DCHA sends HAP contract and requests executed lease" },
+    { step: "Get a DC Basic Business License", days: "Before you begin", desc: "DC requires all landlords to hold a valid BBL with a 'Housing: Rental' endorsement before leasing a unit" },
+    { step: "Create DCHA Owner Portal Account", days: "Day 1", desc: "Register at dcha.hcvportal.org — click \"Sign Up\" under \"New to the HCVP Program?\"" },
+    { step: "Fill Out & Submit RFTA Packet", days: "Day 1–2", desc: "Complete the HUD-52517 + DCHA supplemental forms and upload to the Owner Portal" },
+    { step: "DCHA Reviews Eligibility", days: "~5 business days", desc: "DCHA verifies ownership, rent reasonableness, and tenant affordability" },
+    { step: "Prepare Unit for Inspection", days: "While waiting", desc: "Use the HQS Prep checklist in Step 6 — complete every item so your unit passes on the first try" },
+    { step: "HQS Inspection", days: "~12 business days", desc: "DCHA inspector evaluates unit per Housing Quality Standards. Unit must be vacant, clean, all utilities on" },
+    { step: "HAP Contract Executed", days: "~15 business days", desc: "DCHA sends HAP contract and first payment once unit passes inspection" },
   ];
 
   const pgTimeline = [
-    { step: "Submit RTA + Landlord Packet", days: "Day 1", desc: "Submit to HAPGC with Direct Deposit form and W-9" },
-    { step: "Rent Reasonableness Review", days: "~7 business days", desc: "HAPGC reviews proposed rent against comparable units" },
+    { step: "Obtain a PG County Rental License", days: "Before you begin", desc: "PG County requires a rental license from DPIE before leasing — apply through the county permit office" },
+    { step: "Register with HAPGC", days: "Day 1", desc: "Contact HAPGC at (301) 883-5501 or visit their office to register as a new landlord" },
+    { step: "Fill Out & Submit RTA + Landlord Packet", days: "Day 1–2", desc: "Complete HUD-52517 + HAPGC forms, submit with Direct Deposit form, W-9, and voided check" },
+    { step: "Rent Reasonableness Review", days: "~7 business days", desc: "HAPGC reviews proposed rent against comparable units in the area" },
+    { step: "Prepare Unit for Inspection", days: "While waiting", desc: "Go through the HQS checklist — fix any issues now so your unit doesn't fail inspection" },
     { step: "HQS Inspection", days: "~14 business days", desc: "Unit inspected for Housing Quality Standards compliance" },
     { step: "Approval & HAP Contract", days: "~21 business days", desc: "Contract executed, HAP payments begin" },
   ];
@@ -391,6 +479,7 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
   const timeline = isDC ? dcTimeline : pgTimeline;
 
   const dcDocs = [
+    "Valid DC Basic Business License (BBL) with Rental endorsement",
     "HUD Form 52517 — Request for Tenancy Approval",
     "DCHA Property Owner/Agent Information Form",
     "DCHA Direct Deposit Authorization Form",
@@ -402,6 +491,7 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
   ];
 
   const pgDocs = [
+    "PG County Rental License (DPIE)",
     "HUD Form 52517 — Request for Tenancy Approval",
     "HAPGC New Landlord Packet",
     "Direct Deposit Authorization + voided check",
@@ -415,7 +505,7 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div>
+        <div className="w-12 h-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center"><ClipboardList className="w-6 h-6 text-[#1e3a5f]" /></div>
         <div>
           <h2 className="text-xl font-bold text-slate-900">Request for Tenancy Approval (HUD-52517)</h2>
           <p className="text-sm text-slate-500">AI-guided walkthrough for Section 8 voucher applications</p>
@@ -423,205 +513,246 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
       </div>
 
       {/* Jurisdiction selector */}
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-slate-700 mb-2">Select your jurisdiction:</p>
+      <div className="mt-4 mb-6">
+        <label className="text-sm font-semibold text-slate-700 mb-2 block">Select your jurisdiction</label>
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => setJurisdiction("dc")}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${isDC ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"}`}>
-            <p className="text-sm font-bold text-slate-900">Washington, DC</p>
-            <p className="text-xs text-slate-500 mt-0.5">DCHA &mdash; DC Housing Authority</p>
+            className={`relative rounded-xl p-4 text-left border-2 transition-all ${isDC ? "bg-[#1e3a5f] text-white border-[#1e3a5f]" : "bg-white border-slate-200 hover:border-slate-300"}`}>
+            {isDC && <div className="absolute top-3 right-3"><CheckCircle2 className="w-5 h-5 text-emerald-400" /></div>}
+            <p className={`text-sm font-bold ${isDC ? "text-white" : "text-slate-700"}`}>Washington, DC</p>
+            <p className={`text-xs mt-0.5 ${isDC ? "text-blue-200" : "text-slate-400"}`}>DCHA &mdash; DC Housing Authority</p>
           </button>
           <button onClick={() => setJurisdiction("pg")}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${!isDC ? "border-violet-500 bg-violet-50" : "border-slate-200 hover:border-slate-300"}`}>
-            <p className="text-sm font-bold text-slate-900">Prince George&apos;s County, MD</p>
-            <p className="text-xs text-slate-500 mt-0.5">HAPGC &mdash; Housing Authority of PG County</p>
+            className={`relative rounded-xl p-4 text-left border-2 transition-all ${!isDC ? "bg-[#1e3a5f] text-white border-[#1e3a5f]" : "bg-white border-slate-200 hover:border-slate-300"}`}>
+            {!isDC && <div className="absolute top-3 right-3"><CheckCircle2 className="w-5 h-5 text-emerald-400" /></div>}
+            <p className={`text-sm font-bold ${!isDC ? "text-white" : "text-slate-700"}`}>Prince George&apos;s County, MD</p>
+            <p className={`text-xs mt-0.5 ${!isDC ? "text-blue-200" : "text-slate-400"}`}>HAPGC &mdash; Housing Authority of PG County</p>
           </button>
         </div>
       </div>
 
       {/* Download official forms */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-        <p className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><Download className="w-4 h-4" /> Download Official Forms</p>
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Download className="w-4 h-4 text-slate-500" />
+          <h3 className="text-sm font-bold text-slate-900">Official {isDC ? "DCHA" : "HAPGC"} Forms</h3>
+        </div>
         <div className="space-y-2">
-          <a href={FORM_URLS.hud52517} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-            <FileText className="w-4 h-4" /> HUD-52517 Request for Tenancy Approval (PDF) <ExternalLink className="w-3 h-3" />
+          <a href={FORM_URLS.hud52517} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+            <FileText className="w-4 h-4 flex-shrink-0" />
+            <span>HUD-52517 Request for Tenancy Approval (PDF)</span>
+            <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
           </a>
           {isDC ? (
             <>
-              <a href={FORM_URLS.dchaRfta} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                <FileText className="w-4 h-4" /> DCHA Complete RFTA Packet (PDF &mdash; includes all forms) <ExternalLink className="w-3 h-3" />
+              <a href={FORM_URLS.dchaRfta} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                <span>DCHA Complete RFTA Packet (PDF &mdash; includes all forms)</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
               </a>
-              <a href={FORM_URLS.dchaForms} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                <FileText className="w-4 h-4" /> DCHA Documents &amp; Forms Page <ExternalLink className="w-3 h-3" />
+              <a href={FORM_URLS.dchaForms} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                <span>DCHA Documents &amp; Forms Page</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
               </a>
-              <a href={FORM_URLS.dchaPortal} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                <ExternalLink className="w-4 h-4" /> DCHA Owner Portal (submit RFTA online) <ExternalLink className="w-3 h-3" />
+              <a href={FORM_URLS.dchaPortal} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                <span>DCHA Owner Portal (submit RFTA online)</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
               </a>
             </>
           ) : (
             <>
-              <a href={FORM_URLS.hapgcLandlordPacket} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                <FileText className="w-4 h-4" /> HAPGC New Landlord Packet (PDF) <ExternalLink className="w-3 h-3" />
+              <a href={FORM_URLS.hapgcLandlordPacket} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                <span>HAPGC New Landlord Packet (PDF)</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
               </a>
-              <a href={FORM_URLS.hapgcSite} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                <ExternalLink className="w-4 h-4" /> HAPGC Housing Authority Website <ExternalLink className="w-3 h-3" />
+              <a href={FORM_URLS.hapgcSite} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                <span>HAPGC Housing Authority Website</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto flex-shrink-0" />
               </a>
             </>
           )}
         </div>
       </div>
 
+      {/* What is this? callout */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-        <p className="text-sm text-blue-800 leading-relaxed">
-          <strong>What is this?</strong> This wizard walks you through every field of the official HUD-52517 Request for Tenancy Approval
-          {isDC ? " and the DCHA RFTA supplemental packet" : " and the HAPGC landlord packet"}.
-          AI guidance helps you avoid common mistakes that cause delays. When you&apos;re done, download your filled summary to reference when completing the official forms.
-        </p>
+        <div className="flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-900">What is this?</h4>
+            <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+              This wizard walks you through every field of the official HUD-52517 Request for Tenancy Approval
+              {isDC ? " and the DCHA RFTA supplemental packet" : " and the HAPGC landlord packet"}.
+              AI guidance helps you avoid common mistakes that cause delays. When you&apos;re done, download your filled summary to reference when completing the official forms.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Timeline */}
-      <h3 className="text-base font-bold text-slate-900 mb-4">{isDC ? "DCHA" : "HAPGC"} Lease-Up Timeline</h3>
-      <div className="space-y-3 mb-8">
-        {timeline.map((t, i) => (
-          <div key={i} className="flex items-start gap-4">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i + 1}</div>
-              {i < timeline.length - 1 && <div className="w-px h-6 bg-blue-200 mt-1" />}
-            </div>
-            <div className="pt-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900">{t.step}</span>
-                <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{t.days}</span>
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">{isDC ? "DCHA" : "HAPGC"} Lease-Up Timeline</h3>
+        <div className="space-y-0">
+          {timeline.map((t, i) => {
+            const isLast = i === timeline.length - 1;
+            return (
+              <div key={i} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  {isLast ? (
+                    <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 z-10">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 z-10">{i + 1}</div>
+                  )}
+                  {!isLast && <div className="w-px h-full bg-slate-200 mt-1" />}
+                </div>
+                <div className="pb-5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-900">{t.step}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      t.days === "Day 1" ? "bg-slate-100 text-slate-500" :
+                      isLast ? "bg-emerald-50 text-emerald-600 border border-emerald-200" :
+                      "bg-amber-50 text-amber-600 border border-amber-200"
+                    }`}>{t.days}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">{t.desc}</p>
+                </div>
               </div>
-              <p className="text-sm text-slate-500 mt-0.5">{t.desc}</p>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
 
       {/* Required documents */}
-      <h3 className="text-base font-bold text-slate-900 mb-3">Required Documents</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
-        {documents.map((d) => (
-          <div key={d} className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-            <span className="text-sm text-slate-700">{d}</span>
-          </div>
-        ))}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <h3 className="text-sm font-bold text-slate-900 mb-3">Required Documents</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {documents.map((d) => (
+            <div key={d} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-100">
+              <div className="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center flex-shrink-0" />
+              <span className="text-xs text-slate-700">{d}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
-        <p className="text-sm text-amber-800 flex items-start gap-2">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <span><strong>Important:</strong> {isDC ? "DCHA requires submission via the Owner Portal at dcha.hcvportal.org. The family should NOT move in until the unit passes inspection, rent is approved, and the HAP contract is executed." : "HAPGC requires submission with a completed Direct Deposit form and voided check. Do not allow move-in before HAP contract execution."}</span>
-        </p>
+      {/* Important warning */}
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
+        <div className="flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-red-800">Important</h4>
+            <p className="text-xs text-red-700 mt-1 leading-relaxed">
+              {isDC ? "DCHA requires submission via the Owner Portal at dcha.hcvportal.org. The family should NOT move in until the unit passes inspection, rent is approved, and the HAP contract is executed." : "HAPGC requires submission with a completed Direct Deposit form and voided check. Do not allow move-in before HAP contract execution."}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Getting Started — Before You Fill Out the Form */}
-      <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-        <Zap className="w-4 h-4 text-blue-600" /> Before You Start: Get These Ready
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div className="mt-6 mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-4 h-4 text-amber-500" />
+        <h3 className="text-sm font-bold text-slate-900">Before You Start: Get These Ready</h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {isDC ? (
           <>
+            <a href="https://mybusiness.dc.gov" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 className="text-sm font-bold text-slate-900">Get a DC Basic Business License (BBL)</h4>
+              </div>
+              <p className="text-xs text-amber-700 leading-relaxed">DC law requires all landlords to hold a BBL with a &ldquo;Housing: Rental&rdquo; endorsement before leasing. Apply online — processing takes ~10 business days.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">mybusiness.dc.gov <ExternalLink className="w-3 h-3" /></span>
+            </a>
             <a href="https://dcha.hcvportal.org" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">1</span>
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 className="text-sm font-bold text-slate-900">Create a DCHA Owner Portal Account</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-blue-900">Create a DCHA Owner Portal Account</span>
-                <p className="text-xs text-blue-700 mt-0.5">New owners must register first. Click &ldquo;Sign Up&rdquo; under &ldquo;New to the HCVP Program?&rdquo;</p>
-                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">dcha.hcvportal.org <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">New owners must register first. Click &ldquo;Sign Up&rdquo; under &ldquo;New to the HCVP Program?&rdquo;</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">dcha.hcvportal.org <ExternalLink className="w-3 h-3" /></span>
             </a>
             <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">2</span>
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
+                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</span>
-                <p className="text-xs text-slate-500 mt-0.5">IRS Form W-9 must match your Owner/Agent form name and Tax ID exactly.</p>
-                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">IRS Form W-9 must match your Owner/Agent form name and Tax ID exactly.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
             </a>
             <a href="https://doee.dc.gov/service/lead-paint-services" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">3</span>
+              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
+                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-red-900">Lead Inspection (Pre-1978 Properties)</span>
-                <p className="text-xs text-red-700 mt-0.5">Required by federal law (24 CFR 35). DCHA will NOT approve without it. Contact DC DOEE for certified inspectors.</p>
-                <span className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1 group-hover:underline">DC DOEE Lead Paint Services <ExternalLink className="w-3 h-3" /></span>
-              </div>
-            </a>
-            <a href="https://apps.hud.gov/offices/lead/training/visualassessment/h00101.htm" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">4</span>
-              </div>
-              <div>
-                <span className="text-sm font-bold text-slate-900">HUD Lead Visual Assessment Training</span>
-                <p className="text-xs text-slate-500 mt-0.5">Free online course. Print your certificate and include it with the RFTA packet.</p>
-                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Free HUD Training <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-red-600 leading-relaxed">Required by federal law (24 CFR 35). DCHA will NOT approve without it. Contact DC DOEE for certified inspectors.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">DC DOEE Lead Paint Services <ExternalLink className="w-3 h-3" /></span>
             </a>
           </>
         ) : (
           <>
+            <a href="https://www.princegeorgescountymd.gov/departments-offices/permitting-inspections-enforcement" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 className="text-sm font-bold text-slate-900">Get a PG County Rental License</h4>
+              </div>
+              <p className="text-xs text-amber-700 leading-relaxed">PG County requires a rental license from DPIE (Dept. of Permitting, Inspections &amp; Enforcement) before you can legally lease a unit.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">PG County DPIE <ExternalLink className="w-3 h-3" /></span>
+            </a>
             <a href="https://www.princegeorgescountymd.gov/departments-offices/housing-authority" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-violet-200 bg-violet-50 hover:bg-violet-100 transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">1</span>
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 className="text-sm font-bold text-slate-900">Register with HAPGC</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-violet-900">Register with HAPGC</span>
-                <p className="text-xs text-violet-700 mt-0.5">Contact HAPGC at (301) 883-5501 to register as a new landlord and get your landlord packet.</p>
-                <span className="text-xs font-semibold text-violet-600 flex items-center gap-1 mt-1 group-hover:underline">HAPGC Website <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">Contact HAPGC at (301) 883-5501 to register as a new landlord and get your landlord packet.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">HAPGC Website <ExternalLink className="w-3 h-3" /></span>
             </a>
             <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">2</span>
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
+                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</span>
-                <p className="text-xs text-slate-500 mt-0.5">Required for HAP payment processing. Must match your owner name and Tax ID.</p>
-                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">Required for HAP payment processing. Must match your owner name and Tax ID.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
             </a>
             <a href="https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx" target="_blank" rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-colors group">
-              <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">3</span>
+              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
+                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
               </div>
-              <div>
-                <span className="text-sm font-bold text-red-900">Lead Inspection (Pre-1978 Properties)</span>
-                <p className="text-xs text-red-700 mt-0.5">MD Environment Code 6-8 requires lead-free certification. Contact MDE for approved inspectors.</p>
-                <span className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1 group-hover:underline">MD Lead Poisoning Prevention <ExternalLink className="w-3 h-3" /></span>
-              </div>
+              <p className="text-xs text-red-600 leading-relaxed">MD Environment Code 6-8 requires lead-free certification. Contact MDE for approved inspectors.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">MD Lead Poisoning Prevention <ExternalLink className="w-3 h-3" /></span>
             </a>
-            <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 bg-white">
-              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-bold">4</span>
-              </div>
-              <div>
-                <span className="text-sm font-bold text-slate-900">Gather Supporting Documents</span>
-                <p className="text-xs text-slate-500 mt-0.5">Property deed, photo ID, voided check or bank letter for direct deposit setup, and any lead inspection certificates.</p>
-              </div>
-            </div>
           </>
         )}
       </div>
+      </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-        <p className="text-sm text-emerald-800 flex items-start gap-2">
-          <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <span><strong>Ready?</strong> Click &ldquo;Next&rdquo; to begin filling out your application. When you finish, you&apos;ll be able to download a completed RFTA packet PDF with all your information pre-filled.</span>
-        </p>
+        <div className="flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-emerald-800">Ready?</h4>
+            <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
+              Click &ldquo;Next&rdquo; to begin filling out your application. When you finish, you&apos;ll be able to download a completed RFTA packet PDF with all your information pre-filled.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -753,7 +884,7 @@ function PropertyStep({ form, updateField, activeTip, setActiveTip }: {
         <Field label="5. Year Constructed" hudField="HUD §5" tipKey="yearBuilt" activeTip={activeTip} setActiveTip={setActiveTip} required>
           <input className={inputCls} type="number" value={form.yearConstructed} onChange={(e) => updateField("yearConstructed", e.target.value)} placeholder="e.g., 1985" />
         </Field>
-        <Field label="6. Proposed Rent" hudField="HUD §6" tipKey="requestedRent" activeTip={activeTip} setActiveTip={setActiveTip} required>
+        <Field label="6. Proposed Rent" hudField="HUD §6" tipKey="pricingStrategy" activeTip={activeTip} setActiveTip={setActiveTip} required>
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-sm text-slate-400">$</span>
             <input className={`${inputCls} pl-7`} type="number" value={form.proposedRent} onChange={(e) => updateField("proposedRent", e.target.value)} />
@@ -929,7 +1060,7 @@ function RTAStep({ form, updateField, activeTip, setActiveTip }: {
         <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">HUD §12c</span>
         Lead-Based Paint Status
       </h3>
-      <Field label="" tipKey="yearBuilt" activeTip={activeTip} setActiveTip={setActiveTip}>
+      <Field label="" tipKey="leadAssessment" activeTip={activeTip} setActiveTip={setActiveTip}>
         <div className="space-y-2">
           {[
             { value: "post1978", label: "Lead-based paint requirements do not apply (built on or after January 1, 1978)" },
@@ -1159,83 +1290,109 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
   ];
 
   // ── Submission coaching steps ─────────────────────────
+  let dcStepNum = 0;
   const dcSubmissionSteps = [
     {
-      num: 1, title: "Create a DCHA Owner Portal Account",
+      num: ++dcStepNum, title: "Confirm You Have a DC Basic Business License (BBL)",
+      desc: "DC requires all landlords to hold a valid BBL with a \"Housing: Rental\" endorsement. If you don't have one yet, apply online — it takes ~10 business days to process.",
+      link: "https://mybusiness.dc.gov",
+      linkLabel: "Apply at mybusiness.dc.gov",
+    },
+    {
+      num: ++dcStepNum, title: "Create a DCHA Owner Portal Account",
       desc: "New owners must register at the HCVP Owner Portal. Click \"Sign Up\" under \"New to the HCVP Program? Signup Now\".",
       link: "https://dcha.hcvportal.org",
       linkLabel: "Open DCHA Owner Portal",
     },
     {
-      num: 2, title: "Get Your W-9 Ready",
+      num: ++dcStepNum, title: "Get Your W-9 Ready",
       desc: "Download IRS Form W-9 and complete it with your legal name and Tax ID (SSN or EIN). This must match the Owner/Agent form exactly.",
       link: "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
       linkLabel: "Download W-9 from IRS.gov",
     },
     ...(pre1978 ? [{
-      num: 3, title: "Obtain a Lead Inspection Report",
+      num: ++dcStepNum, title: "Obtain a Lead Inspection Report",
       desc: "Pre-1978 properties require a lead-free certificate from a DC-licensed inspector (DC Code 8-231.01). DCHA will NOT approve tenancy without it. Contact DOEE for approved inspectors.",
       link: "https://doee.dc.gov/service/lead-paint-services",
       linkLabel: "DC DOEE Lead Paint Services",
     },
     {
-      num: 4, title: "Complete HUD Lead Visual Assessment Training",
+      num: ++dcStepNum, title: "Complete HUD Lead Visual Assessment Training",
       desc: "HUD offers a free online visual lead assessment training course for owners. Complete and print the certificate to include in your packet.",
       link: "https://apps.hud.gov/offices/lead/training/visualassessment/h00101.htm",
       linkLabel: "HUD Lead Assessment Training (Free)",
     }] : []),
     {
-      num: pre1978 ? 5 : 3, title: "Gather Supporting Documents",
-      desc: "Collect: copy of property deed (or LLC documentation / Articles of Incorporation), photo ID matching your signature, EIN assignment letter (for LLCs), and a voided check or bank letter for direct deposit.",
+      num: ++dcStepNum, title: "Gather Supporting Documents",
+      desc: "Collect: BBL copy, property deed (or LLC documentation / Articles of Incorporation), photo ID matching your signature, EIN assignment letter (for LLCs), and a voided check or bank letter for direct deposit.",
     },
     {
-      num: pre1978 ? 6 : 4, title: "Download Your Completed RFTA Packet",
+      num: ++dcStepNum, title: "Download Your Completed RFTA Packet",
       desc: "Click the button below to download a pre-filled RFTA packet PDF with all your information. Print it, sign where indicated, and attach your supporting documents.",
       action: "download",
     },
     {
-      num: pre1978 ? 7 : 5, title: "Upload to the DCHA Owner Portal",
+      num: ++dcStepNum, title: "Upload to the DCHA Owner Portal",
       desc: "Log into your Owner Portal account and upload the complete packet. You can track the lease-up status through the portal as it moves through eligibility review, inspection, and HAP contract processing.",
       link: "https://dcha.hcvportal.org",
       linkLabel: "Go to Owner Portal",
     },
     {
-      num: pre1978 ? 8 : 6, title: "Prepare Unit for HQS Inspection",
-      desc: "DCHA will schedule an inspection within ~7 business days. Unit must be vacant, freshly painted, with all utilities on. Review the HQS checklist in this wizard to prepare. All construction/rehab must be complete.",
+      num: ++dcStepNum, title: "Prepare Unit for HQS Inspection (While Waiting)",
+      desc: "While DCHA reviews your packet, use this time to prepare the unit. Go through the HQS checklist in Step 6 and fix every item — unit must be vacant, freshly painted, with all utilities on and all construction complete. Passing on the first try saves weeks.",
+    },
+    {
+      num: ++dcStepNum, title: "Pass the HQS Inspection",
+      desc: "DCHA will schedule an inspector. If the unit passes, DCHA processes the HAP contract and your first payment. If it fails, you'll get a list of deficiencies — fix them and request a re-inspection.",
     },
   ];
 
+  let pgStepNum = 0;
   const pgSubmissionSteps = [
     {
-      num: 1, title: "Contact HAPGC Landlord Services",
+      num: ++pgStepNum, title: "Get a PG County Rental License",
+      desc: "PG County requires a rental license from DPIE (Dept. of Permitting, Inspections & Enforcement) before you can legally lease a unit. Apply through the county permit office.",
+      link: "https://www.princegeorgescountymd.gov/departments-offices/permitting-inspections-enforcement",
+      linkLabel: "PG County DPIE",
+    },
+    {
+      num: ++pgStepNum, title: "Register with HAPGC",
       desc: "Call (301) 883-5501 or visit the HAPGC office to register as a new landlord. You can also download the New Landlord Packet from their website.",
       link: "https://www.princegeorgescountymd.gov/departments-offices/housing-authority",
       linkLabel: "HAPGC Housing Authority Website",
     },
     {
-      num: 2, title: "Get Your W-9 Ready",
+      num: ++pgStepNum, title: "Get Your W-9 Ready",
       desc: "Download IRS Form W-9 and complete it with your legal name and Tax ID.",
       link: "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
       linkLabel: "Download W-9 from IRS.gov",
     },
     ...(pre1978 ? [{
-      num: 3, title: "Obtain a Lead Inspection Report",
+      num: ++pgStepNum, title: "Obtain a Lead Inspection Report",
       desc: "Pre-1978 properties require a lead-free certificate from a certified inspector. Maryland requires compliance with MD Code, Environment 6-8. Contact MDE for approved inspectors.",
       link: "https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx",
       linkLabel: "MD Lead Poisoning Prevention",
     }] : []),
     {
-      num: pre1978 ? 4 : 3, title: "Gather Supporting Documents",
-      desc: "Collect: property deed, photo ID, voided check for direct deposit, and completed Direct Deposit Authorization form.",
+      num: ++pgStepNum, title: "Gather Supporting Documents",
+      desc: "Collect: rental license copy, property deed, photo ID, voided check for direct deposit, and completed Direct Deposit Authorization form.",
     },
     {
-      num: pre1978 ? 5 : 4, title: "Download Your Completed RFTA Packet",
+      num: ++pgStepNum, title: "Download Your Completed RFTA Packet",
       desc: "Click the button below to download a pre-filled packet PDF. Print, sign, and attach supporting documents.",
       action: "download",
     },
     {
-      num: pre1978 ? 6 : 5, title: "Submit to HAPGC",
+      num: ++pgStepNum, title: "Submit to HAPGC",
       desc: "Submit complete packet to: Housing Authority of PG County, 9200 Basil Court, Suite 107, Largo, MD 20774. Or call (301) 883-5501 for submission instructions.",
+    },
+    {
+      num: ++pgStepNum, title: "Prepare Unit for HQS Inspection (While Waiting)",
+      desc: "While HAPGC reviews your packet, go through the HQS checklist in Step 6. Fix every item now so your unit passes on the first try — failed inspections add weeks to the process.",
+    },
+    {
+      num: ++pgStepNum, title: "Pass the HQS Inspection",
+      desc: "HAPGC will schedule an inspector. If the unit passes, they process the HAP contract and payments begin. If it fails, fix deficiencies and request re-inspection.",
     },
   ];
 
