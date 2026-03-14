@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu, ChevronDown, Shield } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -99,6 +99,20 @@ function StaticNav() {
 function MainNavWithClerk() {
   const { isSignedIn, user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dashboardHref, setDashboardHref] = useState("/dashboard");
+
+  // Detect tenant role and route Dashboard link accordingly
+  useEffect(() => {
+    if (!isSignedIn) return;
+    fetch("/api/tenant/my-home")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.linked) {
+          setDashboardHref("/tenant");
+        }
+      })
+      .catch(() => {});
+  }, [isSignedIn]);
 
   return (
     <nav className="border-b bg-white">
@@ -147,7 +161,7 @@ function MainNavWithClerk() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard">Dashboard</Link>
+                      <Link href={dashboardHref}>Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <SignOutButton>
@@ -192,7 +206,7 @@ function MainNavWithClerk() {
               </>
             ) : (
               <>
-                <Link href="/dashboard" className="text-sm" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                <Link href={dashboardHref} className="text-sm" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
                 <SignOutButton>
                   <button className="text-sm text-left">Sign Out</button>
                 </SignOutButton>
