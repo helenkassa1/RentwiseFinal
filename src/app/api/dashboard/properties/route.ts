@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { users, properties, units } from "@/lib/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { users, properties, units, tenants, maintenanceRequests } from "@/lib/db/schema";
+import { eq, sql, and, ne } from "drizzle-orm";
 
 // GET — list properties for the authenticated user
 export async function GET() {
@@ -33,7 +33,7 @@ export async function GET() {
         jurisdiction: properties.jurisdiction,
         propertyType: properties.propertyType,
         createdAt: properties.createdAt,
-        unitCount: sql<number>`count(${units.id})::int`,
+        unitCount: sql<number>`count(distinct ${units.id})::int`,
       })
       .from(properties)
       .leftJoin(units, eq(units.propertyId, properties.id))
@@ -41,7 +41,84 @@ export async function GET() {
       .groupBy(properties.id)
       .orderBy(properties.createdAt);
 
-    return NextResponse.json({ properties: rows });
+    // Enrich with tenant count and open maintenance requests per property
+    const enriched = await Promise.all(
+      rows.map(async (p) => {
+        // Count active tenants for this property's units
+        const [tenantResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(tenants)
+          .innerJoin(units, eq(tenants.unitId, units.id))
+          .where(
+            and(
+              eq(units.propertyId, p.id),
+              eq(tenants.isActive, true)
+            )
+          );
+
+        // Count open maintenance requests for this property
+        const [maintResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(maintenanceRequests)
+          .innerJoin(units, eq(maintenanceRequests.unitId, units.id))
+          .where(
+            and(
+              eq(units.propertyId, p.id),
+              ne(maintenanceRequests.status, "completed"),
+              ne(maintenanceRequests.status, "tenant_confirmed")
+            )
+          );
+
+        // Count emergency requests
+        const [emergResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(maintenanceRequests)
+          .innerJoin(units, eq(maintenanceRequests.unitId, units.id))
+          .where(
+            and(
+              eq(units.propertyId, p.id),
+              eq(maintenanceRequests.urgency, "emergency"),
+              ne(maintenanceRequests.status, "completed"),
+              ne(maintenanceRequests.status, "tenant_confirmed")
+            )
+          );
+
+        // Get most recent emergency request details
+        let emergencyDetail = null;
+        if ((emergResult?.count ?? 0) > 0) {
+          const [detail] = await db
+            .select({
+              category: maintenanceRequests.category,
+              urgency: maintenanceRequests.urgency,
+              createdAt: maintenanceRequests.createdAt,
+              legalDeadline: maintenanceRequests.legalDeadline,
+            })
+            .from(maintenanceRequests)
+            .innerJoin(units, eq(maintenanceRequests.unitId, units.id))
+            .where(
+              and(
+                eq(units.propertyId, p.id),
+                eq(maintenanceRequests.urgency, "emergency"),
+                ne(maintenanceRequests.status, "completed"),
+                ne(maintenanceRequests.status, "tenant_confirmed")
+              )
+            )
+            .orderBy(sql`${maintenanceRequests.createdAt} DESC`)
+            .limit(1);
+          emergencyDetail = detail ?? null;
+        }
+
+        return {
+          ...p,
+          activeTenants: tenantResult?.count ?? 0,
+          openRequests: maintResult?.count ?? 0,
+          emergencyRequests: emergResult?.count ?? 0,
+          emergencyDetail,
+        };
+      })
+    );
+
+    return NextResponse.json({ properties: enriched });
   } catch (err) {
     console.error("Properties GET error:", err);
     return NextResponse.json({ error: "Failed to load properties" }, { status: 500 });

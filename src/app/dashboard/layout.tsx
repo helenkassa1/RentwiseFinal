@@ -8,33 +8,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r bg-slate-50 lg:block">
-        <Link href="/" className="flex h-16 items-center gap-2 border-b px-6 hover:opacity-90">
-          <Shield className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold">RentWise</span>
+      <aside className="hidden w-[220px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col sticky top-0 h-screen">
+        <Link
+          href="/"
+          className="flex h-16 items-center gap-2 border-b border-slate-100 px-5 hover:opacity-90"
+        >
+          <Shield className="h-6 w-6 text-blue-600" />
+          <span className="text-lg font-bold text-slate-900">RentWise</span>
         </Link>
         <DashboardNav />
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col bg-slate-50">
         {/* Top Bar */}
-        <header className="flex h-16 items-center justify-between border-b px-4 lg:px-8">
+        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-90">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">RentWise</span>
+            <Shield className="h-6 w-6 text-blue-600" />
+            <span className="font-bold text-slate-900">RentWise</span>
           </Link>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">
             <Link href="/dashboard/notifications">
-              <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+              <Bell className="h-5 w-5 text-slate-400 hover:text-slate-600 transition-colors" />
             </Link>
             <DashboardHeaderAuth />
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
 
         {/* AI Disclaimer Footer */}
         <AIDisclaimerBar />
