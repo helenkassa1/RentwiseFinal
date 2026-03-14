@@ -15,6 +15,8 @@ import {
   Pencil,
   MoreVertical,
   AlertTriangle,
+  Save,
+  CheckCircle2,
 } from "lucide-react";
 
 type PropertyRow = {
@@ -31,12 +33,14 @@ type PropertyRow = {
 };
 
 type UnitDraft = {
+  id?: string; // present if existing DB unit, absent if new
   identifier: string;
   bedrooms: string;
   bathrooms: string;
   squareFeet: string;
   rentAmount: string;
   isVoucherUnit: boolean;
+  _deleted?: boolean; // marked for deletion
 };
 
 const emptyUnit: UnitDraft = {
@@ -60,9 +64,11 @@ export default function PropertiesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [unitsLoading, setUnitsLoading] = useState(false);
 
   // Delete confirmation state
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -107,10 +113,11 @@ export default function PropertiesPage() {
     setPropertyType("residential");
     setUnitDrafts([{ ...emptyUnit, identifier: "Unit 1" }]);
     setError(null);
+    setSuccess(null);
     setEditingId(null);
   }
 
-  function startEdit(p: PropertyRow) {
+  async function startEdit(p: PropertyRow) {
     setEditingId(p.id);
     setName(p.name ?? "");
     setAddress(p.address);
@@ -119,21 +126,61 @@ export default function PropertiesPage() {
     setZipCode(p.zipCode ?? "");
     setJurisdiction(p.jurisdiction);
     setPropertyType(p.propertyType ?? "residential");
-    setUnitDrafts([]);
     setShowForm(true);
     setOpenMenuId(null);
     setError(null);
+    setSuccess(null);
+
+    // Fetch existing units for this property
+    setUnitsLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/units?propertyId=${p.id}`);
+      const data = await res.json();
+      const existingUnits: UnitDraft[] = (data.units ?? []).map((u: {
+        id: string;
+        identifier: string;
+        bedrooms: number | null;
+        bathrooms: string | null;
+        squareFeet: number | null;
+        rentAmount: string | null;
+        isVoucherUnit: boolean;
+      }) => ({
+        id: u.id,
+        identifier: u.identifier,
+        bedrooms: u.bedrooms?.toString() ?? "",
+        bathrooms: u.bathrooms?.toString() ?? "",
+        squareFeet: u.squareFeet?.toString() ?? "",
+        rentAmount: u.rentAmount?.toString() ?? "",
+        isVoucherUnit: u.isVoucherUnit,
+      }));
+      setUnitDrafts(existingUnits.length > 0 ? existingUnits : []);
+    } catch {
+      setUnitDrafts([]);
+    } finally {
+      setUnitsLoading(false);
+    }
   }
 
   function addUnit() {
-    setUnitDrafts((prev) => [
-      ...prev,
-      { ...emptyUnit, identifier: `Unit ${prev.length + 1}` },
-    ]);
+    setUnitDrafts((prev) => {
+      const visibleCount = prev.filter((u) => !u._deleted).length;
+      return [
+        ...prev,
+        { ...emptyUnit, identifier: `Unit ${visibleCount + 1}` },
+      ];
+    });
   }
 
   function removeUnit(idx: number) {
-    setUnitDrafts((prev) => prev.filter((_, i) => i !== idx));
+    setUnitDrafts((prev) => {
+      const unit = prev[idx];
+      if (unit.id) {
+        // Existing DB unit — mark for deletion
+        return prev.map((u, i) => (i === idx ? { ...u, _deleted: true } : u));
+      }
+      // New draft — just remove
+      return prev.filter((_, i) => i !== idx);
+    });
   }
 
   function updateUnit(idx: number, field: keyof UnitDraft, value: string | boolean) {
@@ -150,11 +197,12 @@ export default function PropertiesPage() {
     }
     setSubmitting(true);
     setError(null);
+    setSuccess(null);
 
     try {
       if (editingId) {
-        // Update existing property
-        const res = await fetch("/api/dashboard/properties", {
+        // 1. Update property details
+        const propRes = await fetch("/api/dashboard/properties", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -169,13 +217,66 @@ export default function PropertiesPage() {
           }),
         });
 
-        if (!res.ok) {
-          const data = await res.json();
+        if (!propRes.ok) {
+          const data = await propRes.json();
           setError(data.error || "Failed to update property.");
           return;
         }
+
+        // 2. Process unit changes
+        const unitPromises: Promise<Response>[] = [];
+
+        for (const unit of unitDrafts) {
+          if (unit._deleted && unit.id) {
+            // Delete existing unit
+            unitPromises.push(
+              fetch(`/api/dashboard/units?id=${unit.id}`, { method: "DELETE" })
+            );
+          } else if (unit.id && !unit._deleted) {
+            // Update existing unit
+            unitPromises.push(
+              fetch("/api/dashboard/units", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id: unit.id,
+                  identifier: unit.identifier.trim(),
+                  bedrooms: unit.bedrooms ? parseInt(unit.bedrooms, 10) : null,
+                  bathrooms: unit.bathrooms || null,
+                  squareFeet: unit.squareFeet ? parseInt(unit.squareFeet, 10) : null,
+                  rentAmount: unit.rentAmount || null,
+                  isVoucherUnit: unit.isVoucherUnit,
+                }),
+              })
+            );
+          } else if (!unit.id && !unit._deleted && unit.identifier.trim()) {
+            // Add new unit
+            unitPromises.push(
+              fetch("/api/dashboard/units", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  propertyId: editingId,
+                  identifier: unit.identifier.trim(),
+                  bedrooms: unit.bedrooms ? parseInt(unit.bedrooms, 10) : null,
+                  bathrooms: unit.bathrooms || null,
+                  squareFeet: unit.squareFeet ? parseInt(unit.squareFeet, 10) : null,
+                  rentAmount: unit.rentAmount || null,
+                  isVoucherUnit: unit.isVoucherUnit,
+                }),
+              })
+            );
+          }
+        }
+
+        await Promise.all(unitPromises);
+        setSuccess("Property and units updated successfully!");
+        setTimeout(() => {
+          resetForm();
+          setShowForm(false);
+        }, 1200);
       } else {
-        // Create new property
+        // Create new property with units
         const res = await fetch("/api/dashboard/properties", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,7 +289,7 @@ export default function PropertiesPage() {
             jurisdiction,
             propertyType,
             unitList: unitDrafts
-              .filter((u) => u.identifier.trim())
+              .filter((u) => u.identifier.trim() && !u._deleted)
               .map((u) => ({
                 identifier: u.identifier.trim(),
                 bedrooms: u.bedrooms ? parseInt(u.bedrooms, 10) : null,
@@ -205,10 +306,11 @@ export default function PropertiesPage() {
           setError(data.error || "Failed to create property.");
           return;
         }
+
+        resetForm();
+        setShowForm(false);
       }
 
-      resetForm();
-      setShowForm(false);
       await fetchProperties();
     } catch {
       setError("Network error. Please try again.");
@@ -236,6 +338,8 @@ export default function PropertiesPage() {
       setDeleteLoading(false);
     }
   }
+
+  const visibleUnits = unitDrafts.filter((u) => !u._deleted);
 
   return (
     <div className="space-y-6">
@@ -266,6 +370,12 @@ export default function PropertiesPage() {
               {error && (
                 <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                   {error}
+                </div>
+              )}
+              {success && (
+                <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {success}
                 </div>
               )}
 
@@ -361,33 +471,57 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
-              {/* Units — only shown for new properties */}
-              {!editingId && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                      Units
-                    </h3>
-                    <Button type="button" variant="outline" size="sm" onClick={addUnit}>
-                      <Plus className="mr-1 h-3 w-3" /> Add Unit
-                    </Button>
-                  </div>
+              {/* Units */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Units ({visibleUnits.length})
+                  </h3>
+                  <Button type="button" variant="outline" size="sm" onClick={addUnit}>
+                    <Plus className="mr-1 h-3 w-3" /> Add Unit
+                  </Button>
+                </div>
 
-                  {unitDrafts.map((unit, idx) => (
-                    <div key={idx} className="rounded-lg border p-4 space-y-3">
+                {unitsLoading && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading units...</span>
+                  </div>
+                )}
+
+                {!unitsLoading && visibleUnits.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    No units yet. Click &quot;Add Unit&quot; to add units to this property.
+                  </div>
+                )}
+
+                {!unitsLoading && unitDrafts.map((unit, idx) => {
+                  if (unit._deleted) return null;
+                  return (
+                    <div key={unit.id ?? `new-${idx}`} className="rounded-lg border p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Unit {idx + 1}</span>
-                        {unitDrafts.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => removeUnit(idx)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Button>
-                        )}
+                        <span className="text-sm font-medium">
+                          {unit.id ? (
+                            <span className="flex items-center gap-2">
+                              {unit.identifier || `Unit ${idx + 1}`}
+                              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Existing</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-2">
+                              New Unit
+                              <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded">New</span>
+                            </span>
+                          )}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => removeUnit(idx)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                         <div>
@@ -455,9 +589,9 @@ export default function PropertiesPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
               {/* Submit */}
               <div className="flex gap-3 pt-2">
@@ -465,7 +599,9 @@ export default function PropertiesPage() {
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {submitting
                     ? editingId ? "Saving..." : "Creating..."
-                    : editingId ? "Save Changes" : "Create Property"}
+                    : editingId ? (
+                      <><Save className="mr-2 h-4 w-4" /> Save All Changes</>
+                    ) : "Create Property"}
                 </Button>
                 <Button
                   type="button"
