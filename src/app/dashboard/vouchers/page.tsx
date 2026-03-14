@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { FIELD_TIPS, type FieldTip } from "@/lib/voucher/dcha-tips";
 import { HQS_CHECKLIST, ALL_HQS_ITEMS, HIGH_RISK_COUNT } from "@/lib/voucher/hqs-checklist";
+import { generateRFTAPdf } from "@/lib/voucher/generate-rfta-pdf";
 
 // ═══════════════════════════════════════════════════════════
 // Types & Constants
@@ -347,8 +348,8 @@ export default function VouchersPage() {
               {canNext ? (
                 <button onClick={next} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors">Next <ArrowRight className="w-4 h-4" /></button>
               ) : (
-                <button onClick={() => window.print()} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                  <Download className="w-4 h-4" /> Download Summary
+                <button onClick={() => { try { const doc = generateRFTAPdf(form); doc.save(`RFTA-Packet-${form.ownerName?.replace(/\s+/g, "-") || "draft"}-${new Date().toISOString().slice(0, 10)}.pdf`); } catch(e) { console.error(e); } }} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                  <Download className="w-4 h-4" /> Download RFTA
                 </button>
               )}
             </div>
@@ -509,10 +510,117 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
         ))}
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
         <p className="text-sm text-amber-800 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span><strong>Important:</strong> {isDC ? "DCHA requires submission via the Owner Portal at dcha.hcvportal.org. The family should NOT move in until the unit passes inspection, rent is approved, and the HAP contract is executed." : "HAPGC requires submission with a completed Direct Deposit form and voided check. Do not allow move-in before HAP contract execution."}</span>
+        </p>
+      </div>
+
+      {/* Getting Started — Before You Fill Out the Form */}
+      <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+        <Zap className="w-4 h-4 text-blue-600" /> Before You Start: Get These Ready
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        {isDC ? (
+          <>
+            <a href="https://dcha.hcvportal.org" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">1</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-blue-900">Create a DCHA Owner Portal Account</span>
+                <p className="text-xs text-blue-700 mt-0.5">New owners must register first. Click &ldquo;Sign Up&rdquo; under &ldquo;New to the HCVP Program?&rdquo;</p>
+                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">dcha.hcvportal.org <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">2</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</span>
+                <p className="text-xs text-slate-500 mt-0.5">IRS Form W-9 must match your Owner/Agent form name and Tax ID exactly.</p>
+                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <a href="https://doee.dc.gov/service/lead-paint-services" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">3</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-red-900">Lead Inspection (Pre-1978 Properties)</span>
+                <p className="text-xs text-red-700 mt-0.5">Required by federal law (24 CFR 35). DCHA will NOT approve without it. Contact DC DOEE for certified inspectors.</p>
+                <span className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1 group-hover:underline">DC DOEE Lead Paint Services <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <a href="https://apps.hud.gov/offices/lead/training/visualassessment/h00101.htm" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">4</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-slate-900">HUD Lead Visual Assessment Training</span>
+                <p className="text-xs text-slate-500 mt-0.5">Free online course. Print your certificate and include it with the RFTA packet.</p>
+                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Free HUD Training <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+          </>
+        ) : (
+          <>
+            <a href="https://www.princegeorgescountymd.gov/departments-offices/housing-authority" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-violet-200 bg-violet-50 hover:bg-violet-100 transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">1</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-violet-900">Register with HAPGC</span>
+                <p className="text-xs text-violet-700 mt-0.5">Contact HAPGC at (301) 883-5501 to register as a new landlord and get your landlord packet.</p>
+                <span className="text-xs font-semibold text-violet-600 flex items-center gap-1 mt-1 group-hover:underline">HAPGC Website <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">2</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</span>
+                <p className="text-xs text-slate-500 mt-0.5">Required for HAP payment processing. Must match your owner name and Tax ID.</p>
+                <span className="text-xs font-semibold text-blue-600 flex items-center gap-1 mt-1 group-hover:underline">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <a href="https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx" target="_blank" rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-colors group">
+              <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">3</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-red-900">Lead Inspection (Pre-1978 Properties)</span>
+                <p className="text-xs text-red-700 mt-0.5">MD Environment Code 6-8 requires lead-free certification. Contact MDE for approved inspectors.</p>
+                <span className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1 group-hover:underline">MD Lead Poisoning Prevention <ExternalLink className="w-3 h-3" /></span>
+              </div>
+            </a>
+            <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 bg-white">
+              <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">4</span>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-slate-900">Gather Supporting Documents</span>
+                <p className="text-xs text-slate-500 mt-0.5">Property deed, photo ID, voided check or bank letter for direct deposit setup, and any lead inspection certificates.</p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <p className="text-sm text-emerald-800 flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span><strong>Ready?</strong> Click &ldquo;Next&rdquo; to begin filling out your application. When you finish, you&apos;ll be able to download a completed RFTA packet PDF with all your information pre-filled.</span>
         </p>
       </div>
     </div>
@@ -1003,6 +1111,18 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
 
   const utilsPaid = Object.entries(form.utilities).filter(([, v]) => v === "tenant").map(([k]) => k).join(", ") || "None (owner pays all)";
 
+  const downloadRFTA = () => {
+    try {
+      const doc = generateRFTAPdf(form);
+      doc.save(`RFTA-Packet-${form.ownerName?.replace(/\s+/g, "-") || "draft"}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (e) {
+      console.error("PDF generation error:", e);
+      alert("There was an error generating the PDF. Please try again.");
+    }
+  };
+
+  const pre1978 = form.yearConstructed && parseInt(form.yearConstructed) < 1978;
+
   const sections = [
     {
       title: `${agencyName} Owner Information`, items: [
@@ -1038,15 +1158,146 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
     },
   ];
 
+  // ── Submission coaching steps ─────────────────────────
+  const dcSubmissionSteps = [
+    {
+      num: 1, title: "Create a DCHA Owner Portal Account",
+      desc: "New owners must register at the HCVP Owner Portal. Click \"Sign Up\" under \"New to the HCVP Program? Signup Now\".",
+      link: "https://dcha.hcvportal.org",
+      linkLabel: "Open DCHA Owner Portal",
+    },
+    {
+      num: 2, title: "Get Your W-9 Ready",
+      desc: "Download IRS Form W-9 and complete it with your legal name and Tax ID (SSN or EIN). This must match the Owner/Agent form exactly.",
+      link: "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
+      linkLabel: "Download W-9 from IRS.gov",
+    },
+    ...(pre1978 ? [{
+      num: 3, title: "Obtain a Lead Inspection Report",
+      desc: "Pre-1978 properties require a lead-free certificate from a DC-licensed inspector (DC Code 8-231.01). DCHA will NOT approve tenancy without it. Contact DOEE for approved inspectors.",
+      link: "https://doee.dc.gov/service/lead-paint-services",
+      linkLabel: "DC DOEE Lead Paint Services",
+    },
+    {
+      num: 4, title: "Complete HUD Lead Visual Assessment Training",
+      desc: "HUD offers a free online visual lead assessment training course for owners. Complete and print the certificate to include in your packet.",
+      link: "https://apps.hud.gov/offices/lead/training/visualassessment/h00101.htm",
+      linkLabel: "HUD Lead Assessment Training (Free)",
+    }] : []),
+    {
+      num: pre1978 ? 5 : 3, title: "Gather Supporting Documents",
+      desc: "Collect: copy of property deed (or LLC documentation / Articles of Incorporation), photo ID matching your signature, EIN assignment letter (for LLCs), and a voided check or bank letter for direct deposit.",
+    },
+    {
+      num: pre1978 ? 6 : 4, title: "Download Your Completed RFTA Packet",
+      desc: "Click the button below to download a pre-filled RFTA packet PDF with all your information. Print it, sign where indicated, and attach your supporting documents.",
+      action: "download",
+    },
+    {
+      num: pre1978 ? 7 : 5, title: "Upload to the DCHA Owner Portal",
+      desc: "Log into your Owner Portal account and upload the complete packet. You can track the lease-up status through the portal as it moves through eligibility review, inspection, and HAP contract processing.",
+      link: "https://dcha.hcvportal.org",
+      linkLabel: "Go to Owner Portal",
+    },
+    {
+      num: pre1978 ? 8 : 6, title: "Prepare Unit for HQS Inspection",
+      desc: "DCHA will schedule an inspection within ~7 business days. Unit must be vacant, freshly painted, with all utilities on. Review the HQS checklist in this wizard to prepare. All construction/rehab must be complete.",
+    },
+  ];
+
+  const pgSubmissionSteps = [
+    {
+      num: 1, title: "Contact HAPGC Landlord Services",
+      desc: "Call (301) 883-5501 or visit the HAPGC office to register as a new landlord. You can also download the New Landlord Packet from their website.",
+      link: "https://www.princegeorgescountymd.gov/departments-offices/housing-authority",
+      linkLabel: "HAPGC Housing Authority Website",
+    },
+    {
+      num: 2, title: "Get Your W-9 Ready",
+      desc: "Download IRS Form W-9 and complete it with your legal name and Tax ID.",
+      link: "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
+      linkLabel: "Download W-9 from IRS.gov",
+    },
+    ...(pre1978 ? [{
+      num: 3, title: "Obtain a Lead Inspection Report",
+      desc: "Pre-1978 properties require a lead-free certificate from a certified inspector. Maryland requires compliance with MD Code, Environment 6-8. Contact MDE for approved inspectors.",
+      link: "https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx",
+      linkLabel: "MD Lead Poisoning Prevention",
+    }] : []),
+    {
+      num: pre1978 ? 4 : 3, title: "Gather Supporting Documents",
+      desc: "Collect: property deed, photo ID, voided check for direct deposit, and completed Direct Deposit Authorization form.",
+    },
+    {
+      num: pre1978 ? 5 : 4, title: "Download Your Completed RFTA Packet",
+      desc: "Click the button below to download a pre-filled packet PDF. Print, sign, and attach supporting documents.",
+      action: "download",
+    },
+    {
+      num: pre1978 ? 6 : 5, title: "Submit to HAPGC",
+      desc: "Submit complete packet to: Housing Authority of PG County, 9200 Basil Court, Suite 107, Largo, MD 20774. Or call (301) 883-5501 for submission instructions.",
+    },
+  ];
+
+  const submissionSteps = isDC ? dcSubmissionSteps : pgSubmissionSteps;
+
   return (
     <div>
-      <h2 className="text-lg font-bold text-slate-900 mb-1">Review — HUD-52517 + {agencyName} Packet</h2>
-      <p className="text-sm text-slate-500 mb-6">Review all information. Download the summary, then use it to fill out the official forms.</p>
+      <h2 className="text-lg font-bold text-slate-900 mb-1">Review &amp; Submit — {agencyName} RFTA Packet</h2>
+      <p className="text-sm text-slate-500 mb-6">Review your information, then follow the step-by-step guide to submit your application.</p>
 
-      <div className="space-y-5">
+      {/* ── Download RFTA Button (prominent) ────────────── */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 mb-6 text-center">
+        <FileText className="w-8 h-8 text-blue-200 mx-auto mb-2" />
+        <h3 className="text-lg font-bold text-white mb-1">Your RFTA Packet is Ready</h3>
+        <p className="text-sm text-blue-100 mb-4 max-w-md mx-auto">Download a pre-filled PDF with all the information you&apos;ve entered. Print it, sign it, and submit with your supporting documents.</p>
+        <button onClick={downloadRFTA} className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-3.5 rounded-xl text-base hover:bg-blue-50 transition-colors shadow-lg">
+          <Download className="w-5 h-5" /> Download Completed RFTA Packet (PDF)
+        </button>
+        <p className="text-[11px] text-blue-200 mt-3">Generates {isDC ? "7" : "5"}-page packet: Cover Sheet + HUD-52517 + {isDC ? "Features & Amenities + Owner/Agent Form + Direct Deposit + " : ""}HQS Checklist</p>
+      </div>
+
+      {/* ── Step-by-step submission guide ─────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6">
+        <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <ClipboardList className="w-5 h-5 text-blue-600" /> Step-by-Step Submission Guide
+        </h3>
+        <p className="text-xs text-slate-500 mb-4">Follow these steps in order to submit your RFTA packet to {agencyName}.</p>
+
+        <div className="space-y-4">
+          {submissionSteps.map((s) => (
+            <div key={s.num} className="flex gap-4">
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-sm font-bold flex items-center justify-center">{s.num}</div>
+                {s.num < submissionSteps.length && <div className="w-px flex-1 bg-blue-200 mt-1" />}
+              </div>
+              <div className="pb-4 flex-1">
+                <h4 className="text-sm font-bold text-slate-900">{s.title}</h4>
+                <p className="text-sm text-slate-600 mt-1 leading-relaxed">{s.desc}</p>
+                {"link" in s && s.link && (
+                  <a href={s.link} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                    <ExternalLink className="w-3.5 h-3.5" /> {s.linkLabel} <ArrowRight className="w-3 h-3" />
+                  </a>
+                )}
+                {"action" in s && s.action === "download" && (
+                  <button onClick={downloadRFTA}
+                    className="inline-flex items-center gap-2 mt-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+                    <Download className="w-4 h-4" /> Download RFTA Packet (PDF)
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Data Review ──────────────────────────────── */}
+      <h3 className="text-base font-bold text-slate-900 mb-3">Application Data Review</h3>
+      <div className="space-y-4">
         {sections.map((s) => (
           <div key={s.title} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 bg-slate-100 border-b border-slate-200"><h3 className="text-sm font-bold text-slate-800">{s.title}</h3></div>
+            <div className="px-4 py-3 bg-slate-100 border-b border-slate-200"><h4 className="text-sm font-bold text-slate-800">{s.title}</h4></div>
             <div className="divide-y divide-slate-100">
               {s.items.filter(([, v]) => v).map(([label, value]) => (
                 <div key={label as string} className="flex items-center justify-between px-4 py-2.5">
@@ -1059,7 +1310,7 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
         ))}
 
         <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3 bg-slate-100 border-b border-slate-200"><h3 className="text-sm font-bold text-slate-800">HQS Inspection Prep</h3></div>
+          <div className="px-4 py-3 bg-slate-100 border-b border-slate-200"><h4 className="text-sm font-bold text-slate-800">HQS Inspection Prep</h4></div>
           <div className="px-4 py-4">
             <div className="flex items-center gap-3">
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden flex-1">
@@ -1071,22 +1322,22 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col sm:flex-row gap-3">
-        <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">
-          <Download className="w-4 h-4" /> Download Application Summary
+      {/* ── Action buttons ───────────────────────────── */}
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <button onClick={downloadRFTA} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">
+          <Download className="w-4 h-4" /> Download RFTA Packet
         </button>
         <button onClick={saveDraft} className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-colors">
           <Save className="w-4 h-4" /> {saved ? "Saved!" : "Save Draft"}
         </button>
       </div>
 
+      {/* ── Additional resources ─────────────────────── */}
       <div className="mt-4 space-y-3">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <p className="text-xs text-blue-700 leading-relaxed">
-            <strong>Next steps:</strong> Download this summary and use it as a reference when completing the official forms.
-            {isDC
-              ? " Submit the RFTA packet (HUD-52517, Owner/Agent form, Direct Deposit form, Features & Amenities form, W-9, and supporting documents) via the DCHA Owner Portal at dcha.hcvportal.org."
-              : " Submit the RTA (HUD-52517, landlord packet, W-9, Direct Deposit form with voided check) to HAPGC at 9200 Basil Court, Suite 107, Largo, MD 20774 or call (301) 883-5501."}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-xs text-amber-800 leading-relaxed flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span><strong>Important:</strong> The downloaded RFTA packet is pre-filled for your convenience, but you must still sign the official forms. {isDC ? "DCHA requires submission via the Owner Portal." : "HAPGC requires in-person or mailed submission."} Do NOT allow the tenant to move in until the unit passes inspection and the HAP contract is executed.</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1094,13 +1345,33 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
             <FileText className="w-3 h-3" /> HUD-52517 PDF <ExternalLink className="w-3 h-3" />
           </a>
           {isDC ? (
-            <a href={FORM_URLS.dchaRfta} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
-              <FileText className="w-3 h-3" /> DCHA RFTA Packet <ExternalLink className="w-3 h-3" />
-            </a>
+            <>
+              <a href={FORM_URLS.dchaRfta} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
+                <FileText className="w-3 h-3" /> DCHA RFTA Packet <ExternalLink className="w-3 h-3" />
+              </a>
+              <a href={FORM_URLS.dchaPortal} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
+                <ExternalLink className="w-3 h-3" /> DCHA Owner Portal <ExternalLink className="w-3 h-3" />
+              </a>
+            </>
           ) : (
             <a href={FORM_URLS.hapgcLandlordPacket} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
               <FileText className="w-3 h-3" /> HAPGC Landlord Packet <ExternalLink className="w-3 h-3" />
             </a>
+          )}
+          <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
+            <FileText className="w-3 h-3" /> IRS W-9 Form <ExternalLink className="w-3 h-3" />
+          </a>
+          {pre1978 && (
+            <>
+              <a href={isDC ? "https://doee.dc.gov/service/lead-paint-services" : "https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx"} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg">
+                <AlertTriangle className="w-3 h-3" /> Lead Inspection Services <ExternalLink className="w-3 h-3" />
+              </a>
+              <a href="https://apps.hud.gov/offices/lead/training/visualassessment/h00101.htm" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg">
+                <Shield className="w-3 h-3" /> HUD Lead Assessment Training <ExternalLink className="w-3 h-3" />
+              </a>
+            </>
           )}
         </div>
       </div>
