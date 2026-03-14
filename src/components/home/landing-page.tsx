@@ -95,7 +95,7 @@ function Hero() {
 
           {/* Section 8 callout strip — high visibility */}
           <Link
-            href="/dashboard/vouchers"
+            href="/voucher-navigation"
             className="mt-6 flex items-center gap-3 bg-navy/5 hover:bg-navy/10 border border-navy/10 rounded-xl px-4 py-3 transition-all group max-w-lg"
           >
             <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -786,9 +786,9 @@ function VoucherSection() {
             landlords through every step&nbsp;&mdash; from application to HQS
             inspection&nbsp;&mdash; so you can fill units faster.
           </p>
-          {/* PRESERVED: links to voucher wizard in dashboard */}
+          {/* PRESERVED: links to voucher wizard — routes through auth */}
           <Link
-            href="/dashboard/vouchers"
+            href="/voucher-navigation"
             className="inline-flex items-center gap-2 mt-6 bg-white text-navy font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
           >
             Start DCHA Application <ArrowRight className="w-4 h-4" />
