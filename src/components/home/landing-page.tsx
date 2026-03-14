@@ -93,20 +93,25 @@ function Hero() {
             )}
           </div>
 
-          {/* Section 8 callout strip — high visibility */}
-          <Link
-            href="/voucher-navigation"
-            className="mt-6 flex items-center gap-3 bg-navy/5 hover:bg-navy/10 border border-navy/10 rounded-xl px-4 py-3 transition-all group max-w-lg"
-          >
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900">Accepting Section 8 tenants?</p>
-              <p className="text-xs text-slate-500">Start your DCHA application with AI-guided forms</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-navy transition-colors flex-shrink-0" />
-          </Link>
+          {/* Section 8 callout — integrated hero treatment */}
+          <div className="mt-6 pt-6 border-t border-slate-200/60">
+            <Link
+              href="/voucher-navigation"
+              className="group flex items-center gap-4 bg-white border border-slate-200 rounded-xl px-5 py-3.5 hover:border-[#1e3a5f]/30 hover:shadow-md hover:shadow-[#1e3a5f]/5 transition-all duration-300 max-w-lg"
+            >
+              <div className="w-10 h-10 rounded-lg bg-[#1e3a5f]/5 flex items-center justify-center flex-shrink-0">
+                <FileCheck className="w-5 h-5 text-[#1e3a5f]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900">Accepting Section 8 tenants?</span>
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">NEW</span>
+                </div>
+                <span className="text-xs text-slate-500">AI-guided DCHA application with HQS inspection prep</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#1e3a5f] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            </Link>
+          </div>
         </div>
 
         {/* Right column — Product screenshot frame */}
