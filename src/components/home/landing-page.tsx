@@ -92,6 +92,21 @@ function Hero() {
               )
             )}
           </div>
+
+          {/* Section 8 callout strip — high visibility */}
+          <Link
+            href="/dashboard/vouchers"
+            className="mt-6 flex items-center gap-3 bg-navy/5 hover:bg-navy/10 border border-navy/10 rounded-xl px-4 py-3 transition-all group max-w-lg"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900">Accepting Section 8 tenants?</p>
+              <p className="text-xs text-slate-500">Start your DCHA application with AI-guided forms</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-navy transition-colors flex-shrink-0" />
+          </Link>
         </div>
 
         {/* Right column — Product screenshot frame */}
@@ -771,12 +786,12 @@ function VoucherSection() {
             landlords through every step&nbsp;&mdash; from application to HQS
             inspection&nbsp;&mdash; so you can fill units faster.
           </p>
-          {/* PRESERVED: /voucher-navigation destination */}
+          {/* PRESERVED: links to voucher wizard in dashboard */}
           <Link
-            href="/voucher-navigation"
+            href="/dashboard/vouchers"
             className="inline-flex items-center gap-2 mt-6 bg-white text-navy font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
           >
-            Start Voucher Workflow <ArrowRight className="w-4 h-4" />
+            Start DCHA Application <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -1015,9 +1030,9 @@ function Footer() {
    Section order:
    1. Navbar (sticky — from MainNav)
    2. Hero (two-column: text + screenshot)
-   3. Three Pillars (Lease Review → Tenant Rights → Property Management)
-   4. How It Works (tabbed steps)
-   5. Section 8 Voucher (dark section)
+   3. Section 8 Voucher (dark section — high visibility)
+   4. Three Pillars (Lease Review → Tenant Rights → Property Management)
+   5. How It Works (tabbed steps)
    6. Built Responsibly (ethics — 4 pillars)
    7. Final CTA (dark bg)
    8. Footer (with legal disclaimer)
@@ -1028,9 +1043,9 @@ export function LandingPage() {
       <MainNav />
       <main>
         <Hero />
+        <VoucherSection />
         <ThreePillars />
         <HowItWorks />
-        <VoucherSection />
         <EthicsSection />
         <FinalCTA />
       </main>

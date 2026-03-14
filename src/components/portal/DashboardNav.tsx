@@ -18,6 +18,7 @@ import {
   CreditCard,
   MessageSquare,
   FileSearch,
+  Ticket,
 } from "lucide-react";
 
 type NavLink = {
@@ -46,6 +47,7 @@ const landlordGroups: NavGroup[] = [
       { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
       { href: "/dashboard/tenants", label: "Tenants", icon: Users },
       { href: "/dashboard/inspections", label: "Inspections", icon: ClipboardCheck },
+      { href: "/dashboard/vouchers", label: "Section 8 / Vouchers", icon: Ticket },
     ],
   },
   {
