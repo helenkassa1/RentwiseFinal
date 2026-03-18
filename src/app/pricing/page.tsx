@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, Shield } from "lucide-react";
+import { Check } from "lucide-react";
+import { MainNav } from "@/components/navigation/main-nav";
 
 const plans = [
   {
@@ -63,18 +64,7 @@ const plans = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold">RentWise</span>
-          </Link>
-          <div className="flex gap-3">
-            <Link href="/sign-in"><Button variant="ghost" size="sm">Sign In</Button></Link>
-            <Link href="/sign-up"><Button size="sm">Get Started</Button></Link>
-          </div>
-        </div>
-      </header>
+      <MainNav />
 
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">

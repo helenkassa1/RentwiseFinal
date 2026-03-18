@@ -1,86 +1,174 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Shield, Building2, Key, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
-const roles = [
-  {
-    id: "landlord",
-    label: "Landlord",
-    icon: Building2,
-    description: "I own rental properties and manage them directly.",
-    href: "/dashboard",
-  },
-  {
-    id: "property-manager",
-    label: "Property Manager",
-    icon: Building2,
-    description: "I manage properties on behalf of owners.",
-    href: "/dashboard",
-  },
-  {
-    id: "tenant",
-    label: "Tenant",
-    icon: Key,
-    description: "I rent a home and want to know my rights.",
-    href: "/tenant",
-  },
-];
+import {
+  Home,
+  Building2,
+  Users,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
+import { MainNav } from "@/components/navigation/main-nav";
 
 export default function OnboardingPage() {
+  const { user } = useUser();
   const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleContinue() {
+    if (!selectedRole || !user) return;
+    setIsSubmitting(true);
+
+    try {
+      // Save role to Clerk user metadata
+      await fetch("/api/set-user-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: selectedRole }),
+      });
+
+      // Redirect based on role
+      if (selectedRole === "tenant") {
+        router.push("/tenant-rights");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Failed to set role:", error);
+      setIsSubmitting(false);
+    }
+  }
+
+  const roles = [
+    {
+      id: "tenant",
+      icon: Users,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      borderHover: "hover:border-emerald-300",
+      title: "I\u2019m a Tenant",
+      description:
+        "Review my lease, understand my rights, get legal guidance",
+      badge: "ALWAYS FREE",
+      badgeStyle: "bg-emerald-50 text-emerald-600 border-emerald-200",
+    },
+    {
+      id: "landlord",
+      icon: Home,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      borderHover: "hover:border-blue-300",
+      title: "I\u2019m a Landlord",
+      description:
+        "Manage properties, review leases, stay compliant with DC & MD law",
+      badge: "FREE TO START",
+      badgeStyle: "bg-slate-50 text-slate-500 border-slate-200",
+    },
+    {
+      id: "pm",
+      icon: Building2,
+      iconBg: "bg-violet-50",
+      iconColor: "text-violet-600",
+      borderHover: "hover:border-violet-300",
+      title: "I\u2019m a Property Manager",
+      description:
+        "Portfolio management, team access, bulk compliance tools",
+      badge: null as string | null,
+      badgeStyle: "",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center px-4">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
-            <Shield className="h-6 w-6" aria-hidden />
-            RentWise
-          </Link>
-        </div>
-      </header>
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-lg space-y-6 text-center">
-          <h1 className="text-3xl font-bold">Welcome to RentWise!</h1>
-          <p className="text-muted-foreground">
-            Tell us about yourself so we can personalize your experience.
-          </p>
-          <div className="space-y-3">
-            {roles.map((role) => (
-              <Card
-                key={role.id}
-                className={`cursor-pointer transition-all ${selected === role.id ? "ring-2 ring-primary" : "hover:border-primary/50"}`}
-                onClick={() => setSelected(role.id)}
-              >
-                <CardContent className="flex items-center gap-4 py-4">
-                  <role.icon className="h-8 w-8 text-primary shrink-0" />
-                  <div className="text-left">
-                    <p className="font-semibold">{role.label}</p>
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+      <MainNav />
+      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[#1e3a5f] flex items-center justify-center mx-auto">
+            <span className="text-white font-bold text-lg">R</span>
           </div>
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={!selected}
-            onClick={() => {
-              const role = roles.find((r) => r.id === selected);
-              if (role) router.push(role.href);
-            }}
+          <h1
+            className="text-2xl font-bold text-slate-900 mt-4"
+            style={{ fontFamily: "'Instrument Serif', serif" }}
           >
-            Continue <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            Welcome to RentWise
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            How will you use RentWise? This helps us show you the right tools.
+          </p>
         </div>
-      </main>
+
+        {/* Role cards */}
+        <div className="space-y-3">
+          {roles.map((role) => {
+            const Icon = role.icon;
+            const isSelected = selectedRole === role.id;
+
+            return (
+              <button
+                key={role.id}
+                onClick={() => setSelectedRole(role.id)}
+                className={`w-full bg-white border-2 rounded-xl p-5 text-left transition-all duration-200 ${
+                  isSelected
+                    ? "border-[#1e3a5f] shadow-md shadow-[#1e3a5f]/10"
+                    : `border-slate-200 ${role.borderHover} hover:shadow-sm`
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-11 h-11 rounded-xl ${role.iconBg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <Icon className={`w-5 h-5 ${role.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900">
+                        {role.title}
+                      </span>
+                      {role.badge && (
+                        <span
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${role.badgeStyle}`}
+                        >
+                          {role.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {role.description}
+                    </p>
+                  </div>
+                  {isSelected && (
+                    <CheckCircle2 className="w-5 h-5 text-[#1e3a5f] flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Continue button */}
+        <button
+          onClick={handleContinue}
+          disabled={!selectedRole || isSubmitting}
+          className={`w-full flex items-center justify-center gap-2 mt-6 py-3.5 rounded-xl text-sm font-bold transition-all ${
+            selectedRole
+              ? "bg-[#1e3a5f] hover:bg-[#162d4a] text-white"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          }`}
+        >
+          {isSubmitting ? "Setting up..." : "Continue"}
+          {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+        </button>
+
+        <p className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed">
+          You can change this later in your account settings.
+        </p>
+      </div>
+      </div>
     </div>
   );
 }

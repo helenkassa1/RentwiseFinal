@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { db } from "@/lib/db";
 import { legalStatutes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -8,16 +10,30 @@ import { eq } from "drizzle-orm";
 // AI Client - Anthropic Primary, OpenAI Fallback
 // ============================================
 
+// Read env vars from .env.local as fallback when Next.js doesn't inject them
+// (workaround for Turbopack workspace root issues with git worktrees)
+function readEnvLocal(key: string): string | undefined {
+  const fromEnv = process.env[key];
+  if (fromEnv && fromEnv.trim()) return fromEnv;
+  try {
+    const envPath = join(process.cwd(), ".env.local");
+    const content = readFileSync(envPath, "utf8");
+    const match = content.match(new RegExp(`^${key}=(.+)$`, "m"));
+    return match?.[1]?.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Lazy init so build succeeds when env vars are not set (e.g. Vercel build)
 function getAnthropic() {
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY ?? "",
-  });
+  const apiKey = readEnvLocal("ANTHROPIC_API_KEY") ?? "";
+  return new Anthropic({ apiKey });
 }
 
 function getOpenAI(): OpenAI | null {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key || typeof key !== "string" || key.trim() === "") return null;
+  const key = readEnvLocal("OPENAI_API_KEY");
+  if (!key || key.trim() === "") return null;
   return new OpenAI({ apiKey: key });
 }
 

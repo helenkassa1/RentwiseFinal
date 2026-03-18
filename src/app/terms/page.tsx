@@ -1,19 +1,12 @@
-import { Shield } from "lucide-react";
 import Link from "next/link";
+import { MainNav } from "@/components/navigation/main-nav";
 
 export const metadata = { title: "Terms of Service — RentWise" };
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center px-4">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
-            <Shield className="h-6 w-6" aria-hidden />
-            RentWise
-          </Link>
-        </div>
-      </header>
+      <MainNav />
       <main className="container mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
         <div className="prose prose-slate max-w-none space-y-4">

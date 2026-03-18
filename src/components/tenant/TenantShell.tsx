@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, CreditCard, FileText, Wrench, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserButton } from "@clerk/nextjs";
+import { MainNav } from "@/components/navigation/main-nav";
 
 const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -21,7 +22,8 @@ export function TenantShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      <header className="sticky top-0 z-50 border-b bg-background">
+      <MainNav />
+      <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <Link href="/tenant" className="font-semibold text-foreground">
             My Home

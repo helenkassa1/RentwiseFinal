@@ -3,10 +3,13 @@ import { Shield, Bell } from "lucide-react";
 import { AIDisclaimerBar } from "@/components/ai-disclaimer-bar";
 import { DashboardNav } from "@/components/portal/DashboardNav";
 import { DashboardHeaderAuth } from "@/components/portal/DashboardHeaderAuth";
+import { MainNav } from "@/components/navigation/main-nav";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col min-h-screen">
+      <MainNav />
+      <div className="flex flex-1">
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 border-r bg-slate-50 lg:block">
         <Link href="/" className="flex h-16 items-center gap-2 border-b px-6 hover:opacity-90">
@@ -38,6 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* AI Disclaimer Footer */}
         <AIDisclaimerBar />
+      </div>
       </div>
     </div>
   );

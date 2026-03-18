@@ -2,23 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Shield, Mail, Send } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MainNav } from "@/components/navigation/main-nav";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="container mx-auto flex h-16 items-center px-4">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
-            <Shield className="h-6 w-6" aria-hidden />
-            RentWise
-          </Link>
-        </div>
-      </header>
+      <MainNav />
       <main className="container mx-auto max-w-xl px-4 py-12">
         <h1 className="text-3xl font-bold mb-2 text-center">Contact Us</h1>
         <p className="text-muted-foreground text-center mb-8">

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/shared";
@@ -29,12 +30,25 @@ import {
   CheckCircle2,
   XCircle,
   Shield,
+  Lock,
+  Crown,
+  HelpCircle,
+  Clock,
+  Zap,
+  Calendar,
 } from "lucide-react";
 import {
   AIPreAnalysisDisclaimer,
   ConfidenceBadge,
   PerSuggestionDisclaimer,
 } from "@/components/ai-disclaimer-bar";
+import { AccessGate } from "@/components/access-gate";
+import {
+  canUserReview,
+  incrementAnonReviewCount,
+  hasAnonReviewsRemaining,
+  type RentWiseUser,
+} from "@/lib/usage";
 import { MainNav } from "@/components/navigation/main-nav";
 import type { LeaseReviewResult } from "@/lib/db/schema";
 
@@ -147,12 +161,31 @@ function downloadRevisedLease(revisedText: string, changelog: string[], withChan
 const MAX_UNDO = 50;
 
 export default function PublicLeaseReviewPage() {
+  const { user, isSignedIn } = useUser();
   const [leaseText, setLeaseText] = useState("");
   const [jurisdiction, setJurisdiction] = useState("dc");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
+  const [showGate, setShowGate] = useState(false);
+  const [gateReason, setGateReason] = useState<"anonymous_limit" | "monthly_limit" | "plan_required" | "auth_required">("anonymous_limit");
+  const [flashId, setFlashId] = useState<string | null>(null);
+
+  // Flash an element briefly for cross-reference linking
+  const flashElement = useCallback((id: string) => {
+    setFlashId(id);
+    setTimeout(() => setFlashId(null), 1500);
+  }, []);
+
+  const getRentWiseUser = (): RentWiseUser => {
+    if (!isSignedIn || !user) return null;
+    return {
+      id: user.id,
+      role: (user.publicMetadata?.role as "tenant" | "landlord" | "pm") || "landlord",
+      plan: (user.publicMetadata?.plan as "free" | "pro" | "pm") || "free",
+    };
+  };
   const [results, setResults] = useState<LeaseReviewResult[] | null>(null);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
@@ -245,6 +278,21 @@ export default function PublicLeaseReviewPage() {
 
   const handleAnalyze = async () => {
     if (!leaseText.trim() || leaseText.length < 100) return;
+
+    // Access check before running analysis
+    const rwUser = getRentWiseUser();
+    const access = await canUserReview(rwUser);
+    if (!access.allowed) {
+      setGateReason(access.reason!);
+      setShowGate(true);
+      return;
+    }
+
+    // If anonymous, increment the localStorage counter before analysis
+    if (!isSignedIn) {
+      incrementAnonReviewCount();
+    }
+
     setIsAnalyzing(true);
     setExtractError(null);
     try {
@@ -303,14 +351,18 @@ export default function PublicLeaseReviewPage() {
   const scrollToClause = useCallback((issueId: string) => {
     setSelectedIssueId(issueId);
     setExpandedIds((prev) => new Set([...prev, issueId]));
-    document.getElementById(`clause-${issueId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+    const el = document.getElementById(`clause-${issueId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    flashElement(issueId);
+  }, [flashElement]);
 
   const scrollToSuggestion = useCallback((issueId: string) => {
     setSelectedIssueId(issueId);
     setExpandedIds((prev) => new Set([...prev, issueId]));
-    document.getElementById(`suggestion-${issueId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+    const el = document.getElementById(`suggestion-${issueId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    flashElement(issueId);
+  }, [flashElement]);
 
   const segments = useMemo(() => buildSegments(leaseText, results), [leaseText, results]);
   const { changelog } = useMemo(
@@ -318,14 +370,43 @@ export default function PublicLeaseReviewPage() {
     [leaseText, results]
   );
 
+  const [filter, setFilter] = useState<"all" | "prohibited" | "risky" | "missing" | "resolved">("all");
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+
   const severityMeta = {
-    red: { icon: AlertTriangle, label: "Prohibited", bg: "bg-red-50 dark:bg-red-950/40", border: "border-red-200 dark:border-red-800", text: "text-red-800 dark:text-red-200" },
-    yellow: { icon: AlertCircle, label: "Risky", bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800", text: "text-amber-800 dark:text-amber-200" },
-    blue: { icon: Info, label: "Missing", bg: "bg-blue-50 dark:bg-blue-950/40", border: "border-blue-200 dark:border-blue-800", text: "text-blue-800 dark:text-blue-200" },
+    red: { icon: AlertTriangle, label: "Prohibited", bg: "bg-red-100/80", border: "border-red-200 dark:border-red-800", text: "text-red-800 dark:text-red-200", highlightBorder: "border-b-2 border-red-400", hoverBg: "hover:bg-red-200/90", badgeBg: "bg-red-500", badgeLight: "bg-red-100 text-red-600 border-red-200", cardBorder: "border-red-200 border-l-[3px] border-l-red-400" },
+    yellow: { icon: AlertCircle, label: "Risky", bg: "bg-amber-100/80", border: "border-amber-200 dark:border-amber-800", text: "text-amber-800 dark:text-amber-200", highlightBorder: "border-b-2 border-amber-400", hoverBg: "hover:bg-amber-200/90", badgeBg: "bg-amber-500", badgeLight: "bg-amber-100 text-amber-600 border-amber-200", cardBorder: "border-amber-200 border-l-[3px] border-l-amber-400" },
+    blue: { icon: Info, label: "Missing", bg: "bg-orange-50/50", border: "border-orange-200 dark:border-orange-800", text: "text-orange-800 dark:text-orange-200", highlightBorder: "border-b-2 border-orange-300", hoverBg: "hover:bg-orange-100/90", badgeBg: "bg-orange-500", badgeLight: "bg-orange-100 text-orange-600 border-orange-200", cardBorder: "border-orange-200 border-l-[3px] border-l-orange-400" },
   };
+
+  // Build issue index for numbered badges
+  const issueIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    results?.forEach((r, i) => map.set(r.id, i + 1));
+    return map;
+  }, [results]);
 
   const resolvedCount = results?.filter((r) => r.status === "accepted").length ?? 0;
   const remainingCount = (results?.length ?? 0) - resolvedCount;
+
+  // Filter counts
+  const prohibitedCount = results?.filter((r) => r.severity === "red" && r.status === "pending").length ?? 0;
+  const riskyCount = results?.filter((r) => r.severity === "yellow" && r.status === "pending").length ?? 0;
+  const missingCount = results?.filter((r) => r.severity === "blue" && r.status === "pending").length ?? 0;
+  const resolvedFilterCount = results?.filter((r) => r.status !== "pending").length ?? 0;
+
+  const filteredResults = useMemo(() => {
+    if (!results) return [];
+    return results.filter((s) => {
+      if (filter === "all") return true;
+      if (filter === "resolved") return s.status !== "pending";
+      if (filter === "prohibited") return s.severity === "red" && s.status === "pending";
+      if (filter === "risky") return s.severity === "yellow" && s.status === "pending";
+      if (filter === "missing") return s.severity === "blue" && s.status === "pending";
+      return true;
+    });
+  }, [results, filter]);
+
   const redRemaining = results?.filter((r) => r.severity === "red" && r.status !== "accepted").length ?? 0;
   const yellowRemaining = results?.filter((r) => r.severity === "yellow" && r.status !== "accepted").length ?? 0;
   const blueRemaining = results?.filter((r) => r.severity === "blue" && r.status !== "accepted").length ?? 0;
@@ -369,6 +450,55 @@ export default function PublicLeaseReviewPage() {
 
         {/* Upload area — overlaps header */}
         <div className="max-w-2xl mx-auto px-6 -mt-8 relative z-10 pb-20">
+
+          {/* Usage indicator — shows remaining reviews */}
+          {!isSignedIn && hasAnonReviewsRemaining() && (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 mb-4">
+              <Sparkles className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <span className="text-xs text-blue-700">
+                <span className="font-semibold">1 free review</span> available — no account needed
+              </span>
+            </div>
+          )}
+
+          {!isSignedIn && !hasAnonReviewsRemaining() && (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 mb-4">
+              <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <span className="text-xs text-amber-700">
+                Free review used — <Link href="/sign-up" className="font-semibold underline">create an account</Link> to continue
+              </span>
+            </div>
+          )}
+
+          {isSignedIn && user?.publicMetadata?.role === "tenant" && (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2.5 mb-4">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <span className="text-xs text-emerald-700">
+                <span className="font-semibold">Unlimited reviews</span> — free for tenants
+              </span>
+            </div>
+          )}
+
+          {isSignedIn && user?.publicMetadata?.role === "landlord" && user?.publicMetadata?.plan === "free" && (
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 mb-4">
+              <span className="flex items-center gap-2 text-xs text-slate-600">
+                <FileSearch className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="font-semibold">2 reviews/month</span> on Free plan
+              </span>
+              <Link href="/pricing" className="text-xs text-blue-600 font-semibold hover:text-blue-700">
+                Upgrade for unlimited →
+              </Link>
+            </div>
+          )}
+
+          {isSignedIn && (user?.publicMetadata?.plan === "pro" || user?.publicMetadata?.plan === "pm") && (
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 mb-4">
+              <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <span className="text-xs text-slate-600">
+                <span className="font-semibold">Unlimited reviews</span> — {user?.publicMetadata?.plan === "pro" ? "Pro" : "Property Manager"} plan
+              </span>
+            </div>
+          )}
 
           {/* Main upload card */}
           <div className="bg-white rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
@@ -533,6 +663,15 @@ export default function PublicLeaseReviewPage() {
             </div>
           </div>
         </div>
+
+        {/* Access gate modal */}
+        {showGate && (
+          <AccessGate
+            reason={gateReason}
+            feature="Lease Review"
+            onClose={() => setShowGate(false)}
+          />
+        )}
       </div>
     );
   }
@@ -551,9 +690,21 @@ export default function PublicLeaseReviewPage() {
             <Badge variant="yellow">{summary?.yellowFlags ?? 0} Risky</Badge>
             <Badge variant="blue">{summary?.blueFlags ?? 0} Missing</Badge>
           </div>
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{resolvedCount}</span> resolved · <span className="font-medium text-foreground">{remainingCount}</span> remaining
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{resolvedCount}</span> resolved · <span className="font-medium text-foreground">{remainingCount}</span> remaining
+            </span>
+            <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${results?.length ? (resolvedCount / results.length) * 100 : 0}%` }}
+              />
+            </div>
           </div>
+          <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
+            <Clock className="w-3 h-3" />
+            ~2.5 hrs saved
+          </span>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground truncate">{complianceStatusMessage}</p>
           </div>
@@ -646,7 +797,7 @@ export default function PublicLeaseReviewPage() {
               </div>
             ) : (
               <div
-                className="p-6 font-serif text-[15px] leading-relaxed whitespace-pre-wrap text-foreground selection:bg-primary/20"
+                className="px-10 py-8 font-serif text-[15px] leading-[1.8] whitespace-pre-wrap text-foreground selection:bg-primary/20 max-w-[700px] mx-auto"
                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
                 {(() => {
@@ -658,16 +809,27 @@ export default function PublicLeaseReviewPage() {
                     const meta = severityMeta[seg.severity];
                     const isFirstForIssue = !seenIds.has(seg.issueId);
                     if (isFirstForIssue) seenIds.add(seg.issueId);
+                    const issueNum = issueIndexMap.get(seg.issueId) ?? 0;
+                    const issue = results?.find((r) => r.id === seg.issueId);
+                    const isMuted = issue?.status === "rejected";
                     return (
                       <span
                         key={i}
                         id={isFirstForIssue ? `clause-${seg.issueId}` : undefined}
-                        className={`cursor-pointer rounded px-0.5 -mx-0.5 border-b-2 ${meta.border} ${meta.bg} ${selectedIssueId === seg.issueId ? "ring-1 ring-primary ring-offset-1" : ""}`}
+                        data-suggestion-id={seg.issueId}
+                        className={`cursor-pointer rounded-sm px-0.5 -mx-0.5 ${meta.highlightBorder} ${isMuted ? "bg-slate-100/50 opacity-50" : meta.bg} ${meta.hoverBg} transition-all ${
+                          flashId === seg.issueId ? "ring-2 ring-blue-400 ring-offset-1" : selectedIssueId === seg.issueId ? "ring-1 ring-primary ring-offset-1" : ""
+                        }`}
                         onClick={() => scrollToSuggestion(seg.issueId)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => e.key === "Enter" && scrollToSuggestion(seg.issueId)}
                       >
+                        {isFirstForIssue && (
+                          <span className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded-full ${meta.badgeBg} text-white text-[9px] font-bold mr-1 align-middle flex-shrink-0 hover:scale-110 transition-transform`}>
+                            {issueNum}
+                          </span>
+                        )}
                         {seg.text}
                       </span>
                     );
@@ -681,107 +843,262 @@ export default function PublicLeaseReviewPage() {
         {/* Right: suggestions */}
         <div
           ref={suggestionsPaneRef}
-          className="w-[400px] shrink-0 overflow-y-auto rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-sm flex flex-col"
+          className="w-[420px] shrink-0 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-sm flex flex-col h-full"
         >
-          <div className="p-4 border-b dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
-            <h3 className="font-semibold">Suggestions ({results?.length ?? 0})</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">{summary?.overallAssessment}</p>
+          {/* FIXED ZONE — always visible */}
+          <div className="flex-shrink-0 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-900">Suggestions</span>
+                <span className="w-6 h-6 rounded-full bg-slate-100 text-xs font-bold text-slate-600 flex items-center justify-center">
+                  {results?.length ?? 0}
+                </span>
+              </div>
+              <button className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition-colors" title="↑↓ navigate, Enter expand, A accept, I ignore">
+                <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Filter pills */}
+            <div className="flex items-center gap-1.5 px-4 pb-3 overflow-x-auto">
+              {([
+                { key: "all" as const, label: `All (${results?.length ?? 0})`, activeBg: "bg-slate-900 text-white" },
+                { key: "prohibited" as const, label: `Prohibited (${prohibitedCount})`, activeBg: "bg-red-600 text-white" },
+                { key: "risky" as const, label: `Risky (${riskyCount})`, activeBg: "bg-amber-500 text-white" },
+                { key: "missing" as const, label: `Missing (${missingCount})`, activeBg: "bg-orange-500 text-white" },
+                { key: "resolved" as const, label: `Resolved (${resolvedFilterCount})`, activeBg: "bg-emerald-600 text-white" },
+              ]).map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                    filter === f.key ? f.activeBg : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="divide-y dark:divide-zinc-800 flex-1">
-            {results?.map((issue) => {
+
+          {/* SCROLLABLE ZONE */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2" style={{ scrollbarWidth: "thin" }}>
+            {/* AI Summary — compact */}
+            {summary?.overallAssessment && (
+              <div className="bg-slate-50 rounded-lg px-3 py-2.5 mb-3 border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">AI Summary</span>
+                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Mar 2026
+                  </span>
+                </div>
+                <p className={`text-xs text-slate-600 mt-1.5 leading-relaxed ${summaryExpanded ? "" : "line-clamp-2"}`}>
+                  {summary.overallAssessment}
+                </p>
+                {summary.overallAssessment.length > 120 && (
+                  <button
+                    onClick={() => setSummaryExpanded(!summaryExpanded)}
+                    className="text-[11px] text-blue-600 hover:text-blue-700 font-medium mt-1"
+                  >
+                    {summaryExpanded ? "Show less" : "Read more"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Suggestion cards */}
+            {filteredResults.map((issue) => {
               const meta = severityMeta[issue.severity as keyof typeof severityMeta];
               const Icon = meta.icon;
               const isExpanded = expandedIds.has(issue.id);
               const isSelected = selectedIssueId === issue.id;
+              const issueNum = issueIndexMap.get(issue.id) ?? 0;
+              const isAccepted = issue.status === "accepted";
+              const isRejected = issue.status === "rejected";
+              const isFlagged = issue.status === "flagged";
+              const isResolved = isAccepted || isRejected || isFlagged;
 
               return (
                 <div
                   key={issue.id}
                   id={`suggestion-${issue.id}`}
-                  className={`p-4 transition-colors ${isSelected ? "bg-slate-50 dark:bg-slate-800/50" : ""}`}
+                  data-suggestion-id={issue.id}
+                  className={`bg-white rounded-lg border overflow-hidden transition-all ${
+                    isResolved && !isExpanded ? "opacity-60" : ""
+                  } ${isExpanded ? "border-slate-300 shadow-sm" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"} ${
+                    flashId === issue.id ? "ring-2 ring-blue-400 ring-offset-1" : isSelected ? "ring-1 ring-primary/30" : ""
+                  }`}
                 >
+                  {/* Collapsed header */}
                   <button
                     type="button"
-                    className="w-full text-left"
+                    className="w-full text-left px-3 py-2.5 cursor-pointer group"
                     onClick={() => {
                       toggleExpanded(issue.id);
                       setSelectedIssueId(issue.id);
                       scrollToClause(issue.id);
                     }}
                   >
-                    <div className="flex items-start gap-2">
-                      <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${meta.text}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant={issue.severity as "red" | "yellow" | "blue"}>
-                            {meta.label}
-                          </Badge>
-                          {issue.status !== "pending" && (
-                            <Badge variant={issue.status === "accepted" ? "green" : "secondary"}>
-                              {issue.status}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="mt-1 font-medium text-sm">{issue.title}</p>
-                        <p className="text-xs text-muted-foreground">{issue.summary}</p>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 border ${meta.badgeLight}`}>
+                        {issueNum}
+                      </span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0 ${meta.badgeLight}`}>
+                        {meta.label}
+                      </span>
+                      {/* Confidence indicator */}
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                        issue.confidenceLevel === "high"
+                          ? "text-emerald-600 bg-emerald-50"
+                          : issue.confidenceLevel === "medium"
+                            ? "text-amber-600 bg-amber-50"
+                            : "text-slate-500 bg-slate-100"
+                      }`}>
+                        {issue.confidenceLevel === "high" && <CheckCircle2 className="w-2.5 h-2.5" />}
+                        {issue.confidenceLevel === "high" ? "High" : issue.confidenceLevel === "medium" ? "Review" : "Verify"}
+                      </span>
+                      {isAccepted && (
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">Accepted ✓</span>
+                      )}
+                      {isRejected && (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full">Ignored</span>
+                      )}
+                      {isFlagged && (
+                        <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full border border-violet-200">Flagged</span>
+                      )}
+                      <span className={`text-xs font-semibold truncate flex-1 ${isRejected ? "text-slate-400 line-through" : "text-slate-800"}`}>
+                        {issue.title}
+                      </span>
                       {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <ChevronUp className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 group-hover:text-slate-600" />
                       )}
                     </div>
                   </button>
 
+                  {/* Expanded content */}
                   {isExpanded && (
-                    <div className="mt-3 pt-3 border-t dark:border-zinc-800 space-y-3">
+                    <div className="px-3 pb-3 space-y-3 border-t border-slate-100">
+                      {/* Flagged text */}
                       {issue.problematicText && (
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Problematic language</p>
-                          <p className="mt-1 rounded bg-red-50 dark:bg-red-950/30 p-2 text-xs italic">&ldquo;{issue.problematicText}&rdquo;</p>
+                        <div className="mt-3">
+                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Flagged text</p>
+                          <div className="mt-1.5 bg-red-50 border-l-[3px] border-red-400 rounded-r-lg p-3.5">
+                            <p className="text-sm text-red-900 leading-relaxed line-through decoration-red-300 decoration-2">
+                              {issue.problematicText}
+                            </p>
+                          </div>
                         </div>
                       )}
+
+                      {/* Explanation */}
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">Explanation</p>
-                        <p className="mt-1 text-sm">{issue.explanation}</p>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Explanation</p>
+                        <p className="mt-1 text-sm text-slate-700 leading-relaxed">{issue.explanation}</p>
                       </div>
+
+                      {/* Suggested replacement */}
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">Citation</p>
-                        <p className="mt-1 text-xs font-mono text-primary">{issue.citedStatute}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Suggested action</p>
-                        <p className="mt-1 text-sm">{issue.suggestedAction}</p>
-                      </div>
-                      {issue.suggestedReplacement && (
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Suggested replacement</p>
-                          <p className="mt-1 rounded bg-green-50 dark:bg-green-950/30 p-2 text-xs">{issue.suggestedReplacement}</p>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Suggested replacement</p>
+                        <div className="mt-1.5 bg-emerald-50 border-l-[3px] border-emerald-500 rounded-r-lg p-3.5">
+                          <p className="text-sm text-emerald-900 leading-relaxed">
+                            {issue.suggestedReplacement || issue.suggestedAction || "Consult with a licensed attorney for appropriate replacement language."}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <ConfidenceBadge level={issue.confidenceLevel} />
                       </div>
+
+                      {/* Legal citation */}
+                      <div>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Legal basis</p>
+                        <div className="mt-1.5 flex items-start gap-2.5 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                          <Scale className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-semibold text-slate-700">{issue.citedStatute}</p>
+                          </div>
+                        </div>
+                      </div>
+
                       <PerSuggestionDisclaimer confidence={issue.confidenceLevel} />
 
+                      {/* Action buttons */}
                       {issue.status === "pending" && (
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => handleAction(issue.id, "accepted")}>
-                            <Check className="mr-1 h-3 w-3" /> Accept
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleAction(issue.id, "rejected")}>
-                            <X className="mr-1 h-3 w-3" /> Reject
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleAction(issue.id, "flagged")}>
-                            <Flag className="mr-1 h-3 w-3" /> Flag for attorney
-                          </Button>
+                        <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                          <button
+                            onClick={() => handleAction(issue.id, "accepted")}
+                            className="flex items-center gap-1.5 bg-[#1e3a5f] hover:bg-[#162d4a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Accept Change
+                          </button>
+                          <button
+                            onClick={() => handleAction(issue.id, "rejected")}
+                            className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-medium px-4 py-2 rounded-lg transition-all"
+                          >
+                            Ignore
+                          </button>
+                          <button
+                            onClick={() => handleAction(issue.id, "flagged")}
+                            className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-violet-50 text-slate-500 text-xs font-medium px-3 py-2 rounded-lg transition-all"
+                          >
+                            <Flag className="w-3 h-3" />
+                            Flag
+                          </button>
+                          <button
+                            onClick={() => {
+                              startEdit();
+                              setTimeout(() => {
+                                document.getElementById(`clause-${issue.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }, 100);
+                            }}
+                            className="ml-auto text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors"
+                          >
+                            Edit manually
+                          </button>
                         </div>
+                      )}
+
+                      {isRejected && (
+                        <button
+                          onClick={() => setResults((prev) => prev?.map((r) => (r.id === issue.id ? { ...r, status: "pending" } : r)) ?? null)}
+                          className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Ignored — click to review again
+                        </button>
                       )}
                     </div>
                   )}
                 </div>
               );
             })}
+
+            {filteredResults.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-sm text-slate-400">No suggestions match this filter</p>
+              </div>
+            )}
+
+            {/* Limitations section */}
+            <details className="mt-4 bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+              <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors">
+                <span className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                  <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+                  What this review may miss
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </summary>
+              <div className="px-4 pb-4 text-[11px] text-slate-500 leading-relaxed space-y-1.5">
+                <p>This AI analysis has known limitations:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>Cannot detect issues requiring context beyond the lease text</li>
+                  <li>Unusual or novel lease structures may not be fully analyzed</li>
+                  <li>Local amendments after February 2026 are not reflected</li>
+                  <li>Does not evaluate whether dollar amounts are market-reasonable</li>
+                  <li>Cannot verify factual claims (e.g., whether property is licensed)</li>
+                </ul>
+                <p className="font-medium text-slate-600 mt-2">Always have a licensed attorney review your lease before execution.</p>
+              </div>
+            </details>
           </div>
         </div>
       </div>
