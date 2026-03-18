@@ -389,32 +389,30 @@ export default function VouchersPage() {
       </div>
 
       {/* ═══ TWO-COLUMN CONTENT ═══ */}
-      <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Main content — 2 of 3 columns */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-h-0">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8">{renderStep()}</div>
         </div>
 
         {/* AI Guidance panel — 1 of 3 columns */}
-        <div className="hidden lg:block lg:col-span-1">
-          <div className="sticky top-24">
-            <TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} />
-            {/* Progress summary below guidance */}
-            <div className="mt-4 bg-slate-50 rounded-xl border border-slate-100 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-600">Application Progress</span>
-                <span className="text-xs text-slate-400">Step {stepIdx + 1} of {STEPS.length}</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-1.5">
-                <div className="bg-[#1e3a5f] h-1.5 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <button onClick={saveDraft} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors">
-                  <Save className="w-3.5 h-3.5" />
-                  {saved ? "Saved!" : "Save Draft"}
-                </button>
-                <span className="text-[10px] text-slate-400">Auto-saves as you go</span>
-              </div>
+        <div className="hidden lg:block lg:col-span-1 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+          <TipPanel tip={currentTip} onClose={() => setActiveTip(null)} jurisdiction={form.jurisdiction} />
+          {/* Progress summary below guidance */}
+          <div className="mt-4 bg-slate-50 rounded-xl border border-slate-100 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-600">Application Progress</span>
+              <span className="text-xs text-slate-400">Step {stepIdx + 1} of {STEPS.length}</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-1.5">
+              <div className="bg-[#1e3a5f] h-1.5 rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <button onClick={saveDraft} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors">
+                <Save className="w-3.5 h-3.5" />
+                {saved ? "Saved!" : "Save Draft"}
+              </button>
+              <span className="text-[10px] text-slate-400">Auto-saves as you go</span>
             </div>
           </div>
         </div>
@@ -529,6 +527,95 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
             <p className={`text-xs mt-0.5 ${!isDC ? "text-blue-200" : "text-slate-400"}`}>HAPGC &mdash; Housing Authority of PG County</p>
           </button>
         </div>
+      </div>
+
+      {/* Getting Started — Before You Fill Out the Form */}
+      <div className="mt-6 mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-4 h-4 text-amber-500" />
+        <h3 className="text-sm font-bold text-slate-900">Before You Start: Get These Ready</h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {isDC ? (
+          <>
+            <a href="https://mybusiness.dc.gov" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 className="text-sm font-bold text-slate-900">Get a DC Basic Business License (BBL)</h4>
+              </div>
+              <p className="text-xs text-amber-700 leading-relaxed">DC law requires all landlords to hold a BBL with a &ldquo;Housing: Rental&rdquo; endorsement before leasing. Apply online — processing takes ~10 business days.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">mybusiness.dc.gov <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://dcha.hcvportal.org" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 className="text-sm font-bold text-slate-900">Create a DCHA Owner Portal Account</h4>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">New owners must register first. Click &ldquo;Sign Up&rdquo; under &ldquo;New to the HCVP Program?&rdquo;</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">dcha.hcvportal.org <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
+                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">IRS Form W-9 must match your Owner/Agent form name and Tax ID exactly.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://doee.dc.gov/publication/lead-based-paint-consultant-companies" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
+                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
+              </div>
+              <p className="text-xs text-red-600 leading-relaxed">Required by federal law (24 CFR 35). DCHA will NOT approve without it. Contact DC DOEE for certified inspectors.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">DC DOEE Lead Paint Services <ExternalLink className="w-3 h-3" /></span>
+            </a>
+          </>
+        ) : (
+          <>
+            <a href="https://www.princegeorgescountymd.gov/departments-offices/permitting-inspections-enforcement" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
+                <h4 className="text-sm font-bold text-slate-900">Get a PG County Rental License</h4>
+              </div>
+              <p className="text-xs text-amber-700 leading-relaxed">PG County requires a rental license from DPIE (Dept. of Permitting, Inspections &amp; Enforcement) before you can legally lease a unit.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">PG County DPIE <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://www.princegeorgescountymd.gov/departments-offices/housing-authority" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
+                <h4 className="text-sm font-bold text-slate-900">Register with HAPGC</h4>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">Contact HAPGC at (301) 883-5501 to register as a new landlord and get your landlord packet.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">HAPGC Website <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
+                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">Required for HAP payment processing. Must match your owner name and Tax ID.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
+            </a>
+            <a href="https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx" target="_blank" rel="noopener noreferrer"
+              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
+                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
+              </div>
+              <p className="text-xs text-red-600 leading-relaxed">MD Environment Code 6-8 requires lead-free certification. Contact MDE for approved inspectors.</p>
+              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">MD Lead Poisoning Prevention <ExternalLink className="w-3 h-3" /></span>
+            </a>
+          </>
+        )}
+      </div>
       </div>
 
       {/* Download official forms */}
@@ -652,95 +739,6 @@ function OverviewStep({ jurisdiction, setJurisdiction }: { jurisdiction: Jurisdi
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Getting Started — Before You Fill Out the Form */}
-      <div className="mt-6 mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-amber-500" />
-        <h3 className="text-sm font-bold text-slate-900">Before You Start: Get These Ready</h3>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {isDC ? (
-          <>
-            <a href="https://mybusiness.dc.gov" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
-                <h4 className="text-sm font-bold text-slate-900">Get a DC Basic Business License (BBL)</h4>
-              </div>
-              <p className="text-xs text-amber-700 leading-relaxed">DC law requires all landlords to hold a BBL with a &ldquo;Housing: Rental&rdquo; endorsement before leasing. Apply online — processing takes ~10 business days.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">mybusiness.dc.gov <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://dcha.hcvportal.org" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
-                <h4 className="text-sm font-bold text-slate-900">Create a DCHA Owner Portal Account</h4>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">New owners must register first. Click &ldquo;Sign Up&rdquo; under &ldquo;New to the HCVP Program?&rdquo;</p>
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">dcha.hcvportal.org <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
-                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">IRS Form W-9 must match your Owner/Agent form name and Tax ID exactly.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://doee.dc.gov/service/lead-paint-services" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
-                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
-              </div>
-              <p className="text-xs text-red-600 leading-relaxed">Required by federal law (24 CFR 35). DCHA will NOT approve without it. Contact DC DOEE for certified inspectors.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">DC DOEE Lead Paint Services <ExternalLink className="w-3 h-3" /></span>
-            </a>
-          </>
-        ) : (
-          <>
-            <a href="https://www.princegeorgescountymd.gov/departments-offices/permitting-inspections-enforcement" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-300 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 text-xs font-bold flex items-center justify-center">1</span>
-                <h4 className="text-sm font-bold text-slate-900">Get a PG County Rental License</h4>
-              </div>
-              <p className="text-xs text-amber-700 leading-relaxed">PG County requires a rental license from DPIE (Dept. of Permitting, Inspections &amp; Enforcement) before you can legally lease a unit.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-semibold mt-2 group-hover:text-amber-700">PG County DPIE <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://www.princegeorgescountymd.gov/departments-offices/housing-authority" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
-                <h4 className="text-sm font-bold text-slate-900">Register with HAPGC</h4>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">Contact HAPGC at (301) 883-5501 to register as a new landlord and get your landlord packet.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">HAPGC Website <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
-                <h4 className="text-sm font-bold text-slate-900">Download &amp; Complete Your W-9</h4>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">Required for HAP payment processing. Must match your owner name and Tax ID.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold mt-2 group-hover:text-blue-700">Download from IRS.gov <ExternalLink className="w-3 h-3" /></span>
-            </a>
-            <a href="https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx" target="_blank" rel="noopener noreferrer"
-              className="bg-white rounded-xl border border-red-200 p-4 hover:border-red-300 hover:shadow-sm transition-all group">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-red-50 text-red-600 text-xs font-bold flex items-center justify-center">4</span>
-                <h4 className="text-sm font-bold text-slate-900">Lead Inspection (Pre-1978 Properties)</h4>
-              </div>
-              <p className="text-xs text-red-600 leading-relaxed">MD Environment Code 6-8 requires lead-free certification. Contact MDE for approved inspectors.</p>
-              <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold mt-2 group-hover:text-red-700">MD Lead Poisoning Prevention <ExternalLink className="w-3 h-3" /></span>
-            </a>
-          </>
-        )}
-      </div>
       </div>
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
@@ -1313,7 +1311,7 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
     ...(pre1978 ? [{
       num: ++dcStepNum, title: "Obtain a Lead Inspection Report",
       desc: "Pre-1978 properties require a lead-free certificate from a DC-licensed inspector (DC Code 8-231.01). DCHA will NOT approve tenancy without it. Contact DOEE for approved inspectors.",
-      link: "https://doee.dc.gov/service/lead-paint-services",
+      link: "https://doee.dc.gov/publication/lead-based-paint-consultant-companies",
       linkLabel: "DC DOEE Lead Paint Services",
     },
     {
@@ -1520,7 +1518,7 @@ function ReviewStep({ form, hqsCheckedCount, hqsTotalCount, saveDraft, saved }: 
           </a>
           {pre1978 && (
             <>
-              <a href={isDC ? "https://doee.dc.gov/service/lead-paint-services" : "https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx"} target="_blank" rel="noopener noreferrer"
+              <a href={isDC ? "https://doee.dc.gov/publication/lead-based-paint-consultant-companies" : "https://mde.maryland.gov/programs/land/LeadPoisoningPrevention/Pages/index.aspx"} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg">
                 <AlertTriangle className="w-3 h-3" /> Lead Inspection Services <ExternalLink className="w-3 h-3" />
               </a>

@@ -7,6 +7,8 @@
 
 import { NextResponse } from "next/server";
 import { inArray } from "drizzle-orm";
+import fs from "fs";
+import path from "path";
 import { callAI } from "@/lib/ai/client";
 import { db } from "@/lib/db";
 import { legalStatutes } from "@/lib/db/schema";
@@ -14,6 +16,27 @@ import {
   TENANT_CHAT_SYSTEM_PROMPT,
   buildTenantChatContext,
 } from "@/lib/tenant-rights/tenant-chat-prompts";
+
+/** Check .env.local directly as fallback when process.env is empty */
+function hasEnvKey(varName: string): boolean {
+  const val = process.env[varName];
+  if (typeof val === "string" && val.trim().length > 0) return true;
+  try {
+    const envPath = path.resolve(process.cwd(), ".env.local");
+    const content = fs.readFileSync(envPath, "utf8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      const key = trimmed.slice(0, eqIdx).trim();
+      if (key === varName) {
+        const v = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+        if (v.length > 0) return true;
+      }
+    }
+  } catch { /* .env.local not found */ }
+  return false;
+}
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -48,10 +71,7 @@ async function fetchStatutesForJurisdiction(jurisdiction: "dc" | "pg" | null): P
 
 export async function POST(request: Request) {
   try {
-    const hasAiKey =
-      typeof process.env.ANTHROPIC_API_KEY === "string" && process.env.ANTHROPIC_API_KEY.length > 0 ||
-      typeof process.env.OPENAI_API_KEY === "string" && process.env.OPENAI_API_KEY.length > 0;
-    if (!hasAiKey) {
+    if (!hasEnvKey("ANTHROPIC_API_KEY") && !hasEnvKey("OPENAI_API_KEY")) {
       return NextResponse.json({
         content:
           "The chat isn't configured yet (missing AI API key). Add ANTHROPIC_API_KEY or OPENAI_API_KEY to .env.local and restart the server. For now, you can look up tenant rights at your local housing authority or legal aid.",

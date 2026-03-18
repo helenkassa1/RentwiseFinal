@@ -43,6 +43,84 @@ export type AIResponse = {
   provider: "anthropic" | "openai";
 };
 
+/**
+ * Stream AI response as a ReadableStream of text chunks.
+ * Used for lease review to show progress in real-time.
+ */
+export function callAIStream(
+  systemPrompt: string,
+  userMessage: string,
+  options?: { maxTokens?: number; temperature?: number }
+): ReadableStream<Uint8Array> {
+  const maxTokens = options?.maxTokens ?? 4096;
+  const temperature = options?.temperature ?? 0.2;
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const anthropic = getAnthropic();
+      if (anthropic) {
+        try {
+          const stream = anthropic.messages.stream({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: maxTokens,
+            temperature,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userMessage }],
+          });
+
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+          controller.close();
+          return;
+        } catch (error) {
+          console.error("Anthropic stream error, falling back to OpenAI:", error);
+        }
+      }
+
+      // Fallback to OpenAI streaming
+      const openai = getOpenAI();
+      if (!openai) {
+        controller.enqueue(
+          encoder.encode(JSON.stringify({ error: "AI service temporarily unavailable." }))
+        );
+        controller.close();
+        return;
+      }
+      try {
+        const stream = await openai.chat.completions.create({
+          model: "gpt-4o",
+          max_tokens: maxTokens,
+          temperature,
+          stream: true,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+        });
+
+        for await (const chunk of stream) {
+          const text = chunk.choices[0]?.delta?.content;
+          if (text) controller.enqueue(encoder.encode(text));
+        }
+        controller.close();
+      } catch (err) {
+        console.error("OpenAI stream fallback failed:", err);
+        controller.enqueue(
+          encoder.encode(JSON.stringify({ error: "AI service temporarily unavailable." }))
+        );
+        controller.close();
+      }
+    },
+  });
+}
+
 export async function callAI(
   systemPrompt: string,
   userMessage: string,

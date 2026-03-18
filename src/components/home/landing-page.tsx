@@ -14,7 +14,7 @@
 // - PostHog analytics capture (removed — was in accordion onChange)
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MainNav } from "@/components/navigation/main-nav";
 import {
   CheckCircle2,
@@ -25,15 +25,373 @@ import {
   Scale,
   UserCheck,
   Shield,
+  ShieldCheck,
   AlertCircle,
   ArrowRight,
+  ArrowUp,
   Upload,
   Zap,
   Building2,
   Search,
   LayoutDashboard,
   FileCheck,
+  Sparkles,
 } from "lucide-react";
+
+/* ═══════════════════════════════════════════════════════════
+   HERO CAROUSEL — Product preview slides
+   ═══════════════════════════════════════════════════════════ */
+
+const SLIDE_URLS = [
+  "rentwise.ai/lease-review",
+  "rentwise.ai/rights-assistant",
+  "rentwise.ai/dashboard",
+  "rentwise.ai/vouchers",
+];
+
+const SLIDE_BADGES = [
+  { icon: AlertTriangle, iconClass: "text-red-500", bgClass: "bg-red-50", title: "17 issues found", sub: "in under 2 minutes" },
+  { icon: MessageCircle, iconClass: "text-emerald-600", bgClass: "bg-emerald-50", title: "Free for all tenants", sub: "DC & MD housing codes" },
+  { icon: ShieldCheck, iconClass: "text-blue-600", bgClass: "bg-blue-50", title: "96% compliance score", sub: "across all properties" },
+  { icon: FileCheck, iconClass: "text-blue-600", bgClass: "bg-blue-50", title: "AI-guided forms", sub: "DCHA & HAPGC ready" },
+];
+
+const SLIDE_TABS = [
+  { icon: FileSearch, label: "Lease Review" },
+  { icon: MessageCircle, label: "Tenant Rights" },
+  { icon: LayoutDashboard, label: "Dashboard" },
+  { icon: FileCheck, label: "Section 8" },
+];
+
+function SlideLeaseReview() {
+  return (
+    <div className="flex h-full">
+      <div className="flex-1 p-5 border-r border-slate-100 overflow-hidden">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-1.5 bg-red-50 px-2 py-1 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            <span className="text-[9px] font-bold text-red-600">14 Prohibited</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="text-[9px] font-bold text-amber-600">3 Risky</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-full ml-auto">
+            <span className="text-[9px] font-semibold text-emerald-600">~2.5 hrs saved</span>
+          </div>
+        </div>
+        <div className="space-y-2.5">
+          <div className="h-2 bg-slate-200 rounded-full w-[85%]" />
+          <div className="h-2 bg-slate-200 rounded-full w-[70%]" />
+          <div className="h-2 bg-slate-100 rounded-full w-[90%]" />
+          <div className="bg-red-100 rounded-md p-2 border-l-2 border-red-400">
+            <div className="h-2 bg-red-200 rounded-full w-[95%]" />
+            <div className="h-2 bg-red-200 rounded-full w-[60%] mt-1.5" />
+          </div>
+          <div className="h-2 bg-slate-100 rounded-full w-[75%]" />
+          <div className="h-2 bg-slate-200 rounded-full w-[88%]" />
+          <div className="bg-amber-100 rounded-md p-2 border-l-2 border-amber-400">
+            <div className="h-2 bg-amber-200 rounded-full w-[80%]" />
+            <div className="h-2 bg-amber-200 rounded-full w-[45%] mt-1.5" />
+          </div>
+          <div className="h-2 bg-slate-100 rounded-full w-[65%]" />
+        </div>
+      </div>
+      <div className="w-[180px] bg-slate-50 p-3 overflow-hidden">
+        <div className="text-[10px] font-bold text-slate-700 mb-3">Suggestions (17)</div>
+        <div className="space-y-2">
+          <div className="bg-white rounded-lg p-2.5 border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 text-[8px] font-bold flex items-center justify-center">1</span>
+              <span className="text-[8px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full">Prohibited</span>
+            </div>
+            <div className="text-[9px] font-semibold text-slate-800 leading-snug">Illegal waiver of landlord liability</div>
+            <div className="text-[8px] text-slate-400 mt-1">14 DCMR &sect; 304</div>
+          </div>
+          <div className="bg-white rounded-lg p-2.5 border border-slate-200">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 text-[8px] font-bold flex items-center justify-center">2</span>
+              <span className="text-[8px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full">Prohibited</span>
+            </div>
+            <div className="text-[9px] font-semibold text-slate-800 leading-snug">Excessive late fee ($150)</div>
+            <div className="text-[8px] text-slate-400 mt-1">DC Code &sect; 42-3505</div>
+          </div>
+          <div className="bg-white rounded-lg p-2.5 border border-slate-200">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-600 text-[8px] font-bold flex items-center justify-center">3</span>
+              <span className="text-[8px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full">Missing</span>
+            </div>
+            <div className="text-[9px] font-semibold text-slate-800 leading-snug">Lead paint disclosure</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SlideTenantRights() {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2.5 px-5 py-3 border-b border-slate-100">
+        <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+          <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+        </div>
+        <div>
+          <div className="text-[11px] font-bold text-slate-800">Rights Assistant</div>
+          <div className="text-[9px] text-slate-400">Prince George&apos;s County, MD</div>
+        </div>
+        <span className="ml-auto text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">FREE</span>
+      </div>
+      <div className="flex-1 px-5 py-4 space-y-4 overflow-hidden">
+        <div className="flex justify-end">
+          <div className="bg-[#1e3a5f] text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%]">
+            <p className="text-[11px] leading-relaxed">My landlord hasn&apos;t fixed a leak for 2 weeks. What can I do?</p>
+          </div>
+        </div>
+        <div className="flex justify-start">
+          <div className="bg-slate-50 rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%] border border-slate-200">
+            <p className="text-[11px] text-slate-700 leading-relaxed">
+              Under <span className="font-semibold text-blue-600">MD Code &sect; 8-211</span>, your landlord has an implied warranty to maintain habitable conditions. For non-emergency repairs, Maryland law requires action within a reasonable time.
+            </p>
+            <div className="mt-2.5 bg-emerald-50 rounded-lg p-2.5 border border-emerald-200">
+              <div className="text-[9px] font-bold text-emerald-700 mb-1">Your next steps:</div>
+              <div className="space-y-1">
+                {["Send written repair request via certified mail", "Document with dated photos", "File for rent escrow if unresolved"].map((step, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-200 text-emerald-700 text-[8px] font-bold flex items-center justify-center">{i + 1}</div>
+                    <span className="text-[9px] text-emerald-700">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="px-4 py-3 border-t border-slate-100 flex gap-2">
+        <div className="flex-1 bg-slate-100 rounded-xl px-3 py-2 text-[10px] text-slate-400">Ask about your rights...</div>
+        <div className="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center">
+          <ArrowUp className="w-3.5 h-3.5 text-white" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SlideDashboard() {
+  return (
+    <div className="p-5 h-full overflow-hidden">
+      <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 flex items-center gap-2 mb-4">
+        <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+        <span className="text-[9px] font-semibold text-red-700">Emergency request: Mold at Bowie House &mdash; respond within 24hrs</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        {[
+          { label: "Properties", value: "2", color: "text-slate-900", border: "" },
+          { label: "Tenants", value: "3", color: "text-slate-900", border: "" },
+          { label: "Open Requests", value: "1", color: "text-red-600", border: "border-red-200 bg-red-50/30" },
+          { label: "Compliance", value: "96%", color: "text-emerald-600", border: "" },
+        ].map((s) => (
+          <div key={s.label} className={`bg-white rounded-lg border border-slate-200 p-2.5 ${s.border}`}>
+            <div className="text-[9px] text-slate-400">{s.label}</div>
+            <div className={`text-base font-bold mt-0.5 ${s.color}`}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-lg border border-slate-200 p-3">
+          <div className="text-[10px] font-bold text-slate-700 mb-2">Your Properties</div>
+          <div className="space-y-2">
+            {[
+              { name: "Bowie House", loc: "Bowie, MD", tag: "PG County", tagClass: "bg-blue-50 text-blue-600" },
+              { name: "DC Condo", loc: "Washington, DC", tag: "DC", tagClass: "bg-violet-50 text-violet-600" },
+            ].map((p) => (
+              <div key={p.name} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-800">{p.name}</div>
+                  <div className="text-[8px] text-slate-400">{p.loc}</div>
+                </div>
+                <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${p.tagClass}`}>{p.tag}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-3 text-white">
+            <div className="text-[10px] font-bold">AI Lease Review</div>
+            <div className="text-[8px] text-blue-200 mt-0.5">2 leases &mdash; last checked 3d ago</div>
+          </div>
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg p-3 text-white">
+            <div className="text-[10px] font-bold">Legal Assistant</div>
+            <div className="text-[8px] text-emerald-200 mt-0.5">Ask any housing law question</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SlideVoucher() {
+  return (
+    <div className="p-5 h-full overflow-hidden">
+      <div className="flex items-center gap-1.5 mb-4">
+        {[1, 2, 3, 4].map((n) => (
+          <span key={n} className="contents">
+            <div className={`w-5 h-5 rounded-full text-[8px] font-bold flex items-center justify-center ${n <= 2 ? "bg-[#1e3a5f] text-white" : "bg-slate-200 text-slate-400"}`}>{n}</div>
+            {n < 4 && <div className={`h-0.5 w-6 rounded-full ${n < 2 ? "bg-[#1e3a5f]" : "bg-slate-200"}`} />}
+          </span>
+        ))}
+        <span className="ml-2 text-[9px] text-slate-400">Step 2 of 7: Owner Info</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="text-[9px] font-semibold text-slate-600 mb-1 block">Owner / Agent Name</label>
+          <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] text-slate-700">Helen Landlord</div>
+        </div>
+        <div>
+          <label className="text-[9px] font-semibold text-slate-600 mb-1 block">Entity Type</label>
+          <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] text-slate-700">Individual</div>
+        </div>
+        <div className="col-span-2">
+          <label className="text-[9px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+            Mailing Address
+            <span className="w-3.5 h-3.5 rounded-full bg-blue-100 text-blue-600 text-[7px] font-bold flex items-center justify-center">i</span>
+          </label>
+          <div className="bg-white border border-blue-300 rounded-lg px-3 py-2 text-[10px] text-slate-700 ring-2 ring-blue-100">12218 Quintette Lane, Bowie, MD 20720</div>
+        </div>
+      </div>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Sparkles className="w-3 h-3 text-blue-600" />
+          <span className="text-[9px] font-bold text-blue-700">AI Guidance</span>
+        </div>
+        <p className="text-[9px] text-blue-600 leading-relaxed">
+          Use your legal name exactly as it appears on the property deed. If you&apos;re using an LLC, enter the LLC name and provide your EIN on the next field.
+        </p>
+      </div>
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+        <span className="text-[9px] text-slate-400">Auto-saved</span>
+        <div className="flex gap-2">
+          <div className="text-[9px] text-slate-500 px-3 py-1.5 border border-slate-200 rounded-lg">Back</div>
+          <div className="text-[9px] text-white bg-[#1e3a5f] px-3 py-1.5 rounded-lg font-semibold">Next &rarr;</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const SLIDE_COMPONENTS = [SlideLeaseReview, SlideTenantRights, SlideDashboard, SlideVoucher];
+
+function HeroCarousel() {
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [progressKey, setProgressKey] = useState(0);
+
+  const startTimer = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setActive((p) => (p + 1) % 4);
+      setProgressKey((k) => k + 1);
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    if (!paused) startTimer();
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [paused, startTimer]);
+
+  const handleTab = (i: number) => {
+    setActive(i);
+    setProgressKey((k) => k + 1);
+    if (!paused) startTimer();
+  };
+
+  const badge = SLIDE_BADGES[active];
+  const BadgeIcon = badge.icon;
+
+  return (
+    <div
+      className="relative hidden lg:block"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Fix 5: Browser frame with deeper shadow + subtle tilt */}
+      <div className="bg-white rounded-2xl shadow-[0_25px_60px_-12px_rgba(15,23,42,0.18)] border border-slate-200/80 overflow-hidden transform rotate-[0.5deg] hover:rotate-0 transition-transform duration-500">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+          </div>
+          <div className="flex-1 bg-white rounded-md px-3 py-1 text-[11px] text-slate-400 text-center border border-slate-200 font-mono">
+            {SLIDE_URLS[active]}
+          </div>
+        </div>
+
+        {/* Slide content — crossfade */}
+        <div className="relative h-[340px] overflow-hidden bg-white">
+          {SLIDE_COMPONENTS.map((SlideComp, i) => (
+            <div
+              key={i}
+              className={`absolute inset-0 transition-opacity duration-500 ${active === i ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+            >
+              <SlideComp />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fix 4: Tab indicators — more breathing room, clear separation from badge */}
+      <div className="flex gap-2 mt-8 justify-center flex-wrap">
+        {SLIDE_TABS.map((tab, i) => {
+          const Icon = tab.icon;
+          const isActive = active === i;
+          return (
+            <button
+              key={i}
+              onClick={() => handleTab(i)}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all overflow-hidden ${
+                isActive
+                  ? "bg-[#1e3a5f] text-white font-semibold shadow-sm"
+                  : "bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {tab.label}
+              {/* Progress bar under active tab */}
+              {isActive && (
+                <span
+                  key={progressKey}
+                  className="absolute bottom-0 left-0 h-[2px] bg-white/40 rounded-full"
+                  style={{ animation: "fillProgress 5s linear forwards" }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Fix 4: Floating badge — moved to top-left to avoid tab overlap */}
+      <div className="absolute -top-4 -left-6 bg-white rounded-xl shadow-lg border border-slate-200 px-4 py-3 hidden sm:flex items-center gap-3 z-20">
+        <div className={`w-10 h-10 rounded-full ${badge.bgClass} flex items-center justify-center`}>
+          <BadgeIcon className={`w-5 h-5 ${badge.iconClass}`} />
+        </div>
+        <div>
+          <div className="text-sm font-bold text-slate-900">{badge.title}</div>
+          <div className="text-xs text-slate-500">{badge.sub}</div>
+        </div>
+      </div>
+
+      {/* CSS keyframe for progress bar */}
+      <style jsx>{`
+        @keyframes fillProgress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════
    HERO — Two-column: Text left, product screenshot right
@@ -43,30 +401,35 @@ function Hero() {
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       {/* Subtle grid texture */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.15]" />
+      {/* Fix 1: Radial glow behind carousel area */}
+      <div
+        className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(191,219,254,0.35) 0%, rgba(219,234,254,0.12) 50%, transparent 80%)" }}
+      />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left column — Text */}
-        <div>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 border border-navy/10 text-navy text-sm font-medium mb-6">
+      <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        {/* Left column — Text (Fix 2: tighter spacing) */}
+        <div className="hero-stagger">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 border border-navy/10 text-navy text-sm font-medium mb-5 hero-fade-item">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             AI-powered for DC &amp; Maryland law
           </span>
 
           <h1
-            className="text-4xl md:text-5xl leading-[1.1] text-slate-900"
+            className="text-4xl md:text-5xl leading-[1.1] text-slate-900 hero-fade-item"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
             The legal intelligence your rental property has been missing.
           </h1>
 
-          <p className="text-lg text-slate-500 mt-6 leading-relaxed max-w-lg">
+          <p className="text-lg text-slate-500 mt-5 leading-relaxed max-w-lg hero-fade-item">
             RentWise reviews leases for compliance, helps tenants understand
             their rights, and keeps landlords on the right side of DC and
             Maryland housing law&nbsp;&mdash; all powered by AI.
           </p>
 
           {/* CTAs — PRESERVED destinations: /lease-review and /tenant-rights */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-8">
+          <div className="flex flex-col sm:flex-row gap-3 mt-7 hero-fade-item">
             <Link
               href="/lease-review"
               className="inline-flex items-center justify-center gap-2 bg-navy hover:bg-navy-dark text-white font-semibold px-7 py-3.5 rounded-xl text-base shadow-lg shadow-navy/15 transition-all active:scale-[0.98]"
@@ -82,7 +445,7 @@ function Hero() {
           </div>
 
           {/* Trust signals */}
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-400 mt-8">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-400 mt-6 hero-fade-item">
             {["No account needed", "Free for tenants", "Not legal advice"].map(
               (t) => (
                 <span key={t} className="flex items-center gap-1.5">
@@ -93,14 +456,14 @@ function Hero() {
             )}
           </div>
 
-          {/* Section 8 callout — integrated hero treatment */}
-          <div className="mt-6 pt-6 border-t border-slate-200/60">
+          {/* Fix 3: Section 8 callout — white/glass treatment */}
+          <div className="mt-5 pt-5 border-t border-slate-200/60 hero-fade-item">
             <Link
               href="/voucher-navigation"
-              className="group flex items-center gap-4 bg-white border border-slate-200 rounded-xl px-5 py-3.5 hover:border-[#1e3a5f]/30 hover:shadow-md hover:shadow-[#1e3a5f]/5 transition-all duration-300 max-w-lg"
+              className="group flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl px-5 py-3.5 hover:border-slate-300 hover:bg-white hover:shadow-md transition-all duration-300 max-w-lg"
             >
-              <div className="w-10 h-10 rounded-lg bg-[#1e3a5f]/5 flex items-center justify-center flex-shrink-0">
-                <FileCheck className="w-5 h-5 text-[#1e3a5f]" />
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <FileCheck className="w-4.5 h-4.5 text-[#1e3a5f]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -109,93 +472,42 @@ function Hero() {
                 </div>
                 <span className="text-xs text-slate-500">AI-guided DCHA application with HQS inspection prep</span>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#1e3a5f] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
             </Link>
           </div>
         </div>
 
-        {/* Right column — Product screenshot frame */}
-        <div className="relative hidden lg:block">
-          <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
-            {/* Browser chrome */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-              </div>
-              <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 text-center border border-slate-200">
-                rentwise.ai/lease-review
-              </div>
-            </div>
-            {/* Simplified lease review mockup */}
-            <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-6 h-[320px]">
-              <div className="grid grid-cols-5 gap-3 h-full">
-                {/* Left: fake document */}
-                <div className="col-span-3 bg-white rounded-lg border border-slate-200 p-4 overflow-hidden">
-                  <div className="h-2 w-24 bg-slate-200 rounded mb-3" />
-                  <div className="space-y-2">
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-4/5 bg-red-100 rounded border-l-2 border-red-400" />
-                    <div className="h-1.5 w-full bg-red-100 rounded border-l-2 border-red-400" />
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-3/4 bg-amber-100 rounded border-l-2 border-amber-400" />
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-full bg-slate-100 rounded" />
-                    <div className="h-1.5 w-full bg-red-100 rounded border-l-2 border-red-400" />
-                    <div className="h-1.5 w-2/3 bg-red-100 rounded border-l-2 border-red-400" />
-                  </div>
-                </div>
-                {/* Right: fake suggestions */}
-                <div className="col-span-2 space-y-2">
-                  <div className="bg-white rounded-lg border border-slate-200 p-2.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-red-600">1</span>
-                      </div>
-                      <div className="h-1.5 w-16 bg-red-100 rounded" />
-                    </div>
-                    <div className="h-1 w-full bg-slate-100 rounded" />
-                    <div className="h-1 w-3/4 bg-slate-100 rounded mt-1" />
-                  </div>
-                  <div className="bg-white rounded-lg border border-slate-200 p-2.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-red-600">2</span>
-                      </div>
-                      <div className="h-1.5 w-20 bg-red-100 rounded" />
-                    </div>
-                    <div className="h-1 w-full bg-slate-100 rounded" />
-                    <div className="h-1 w-2/3 bg-slate-100 rounded mt-1" />
-                  </div>
-                  <div className="bg-white rounded-lg border border-slate-200 p-2.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-amber-600">3</span>
-                      </div>
-                      <div className="h-1.5 w-14 bg-amber-100 rounded" />
-                    </div>
-                    <div className="h-1 w-full bg-slate-100 rounded" />
-                    <div className="h-1 w-4/5 bg-slate-100 rounded mt-1" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Floating badge */}
-          <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-slate-200 px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900">17 issues found</div>
-              <div className="text-xs text-slate-500">in under 2 minutes</div>
-            </div>
-          </div>
+        {/* Right column — Product carousel (Fix 7: entrance animation) */}
+        <div className="hero-fade-carousel">
+          <HeroCarousel />
         </div>
       </div>
+
+      {/* Fix 7: Entrance animation keyframes */}
+      <style jsx>{`
+        .hero-stagger .hero-fade-item {
+          opacity: 0;
+          transform: translateY(18px);
+          animation: heroFadeInUp 0.6s ease-out forwards;
+        }
+        .hero-stagger .hero-fade-item:nth-child(1) { animation-delay: 0.05s; }
+        .hero-stagger .hero-fade-item:nth-child(2) { animation-delay: 0.12s; }
+        .hero-stagger .hero-fade-item:nth-child(3) { animation-delay: 0.19s; }
+        .hero-stagger .hero-fade-item:nth-child(4) { animation-delay: 0.26s; }
+        .hero-stagger .hero-fade-item:nth-child(5) { animation-delay: 0.33s; }
+        .hero-stagger .hero-fade-item:nth-child(6) { animation-delay: 0.40s; }
+        .hero-fade-carousel {
+          opacity: 0;
+          transform: translateY(24px);
+          animation: heroFadeInUp 0.7s ease-out 0.3s forwards;
+        }
+        @keyframes heroFadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </section>
   );
 }

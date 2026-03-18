@@ -3,13 +3,10 @@ import { Shield, Bell } from "lucide-react";
 import { AppFooterDisclaimer } from "@/components/ai-disclaimer-bar";
 import { DashboardNav } from "@/components/portal/DashboardNav";
 import { DashboardHeaderAuth } from "@/components/portal/DashboardHeaderAuth";
-import { MainNav } from "@/components/navigation/main-nav";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <MainNav />
-      <div className="flex flex-1">
+    <div className="flex min-h-screen relative">
       {/* Sidebar */}
       <aside className="hidden w-[220px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col sticky top-0 h-screen">
         <Link
@@ -23,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col bg-slate-50">
+      <div className="flex flex-1 flex-col bg-slate-50 min-h-0">
         {/* Top Bar */}
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-90">
@@ -40,11 +37,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 p-6">{children}</main>
 
         {/* AI Disclaimer Footer */}
         <AppFooterDisclaimer />
-      </div>
       </div>
     </div>
   );

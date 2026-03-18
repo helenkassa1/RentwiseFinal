@@ -1,9 +1,20 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState, useCallback, ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Shield, MapPin, AlertCircle, MessageCircle, ArrowRight, Scale, Sparkles, CheckCircle2, FileText, Phone } from "lucide-react";
+import {
+  Shield,
+  MapPin,
+  AlertCircle,
+  Send,
+  MessageCircle,
+  Scale,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+  BookOpen,
+} from "lucide-react";
 import {
   COMMON_TOPICS,
   TOPICS,
@@ -16,7 +27,6 @@ import { getCategory } from "@/lib/tenant-rights/categories";
 import type { Category } from "@/lib/tenant-rights/types";
 import { CategoryDetail } from "@/components/tenant-rights/CategoryDetail";
 import { trackTenantRights } from "@/lib/tenant-rights/analytics";
-import { MainNav } from "@/components/navigation/main-nav";
 
 const STORAGE_KEY = "tenant_rights_jurisdiction";
 const QUERY_KEY = "jurisdiction";
@@ -57,12 +67,166 @@ function labelForJurisdiction(j: Jurisdiction) {
   return j === "dc" ? "Washington, D.C." : "Prince George's County, MD";
 }
 
-function shortLabelForJurisdiction(j: Jurisdiction) {
-  return j === "dc" ? "Washington, D.C." : "PG County, MD";
+/* ── Topic card descriptions & statute citations (jurisdiction-aware) ── */
+const TOPIC_META: Record<TopicCategoryId, { desc: string; dcStatute?: string; pgStatute?: string }> = {
+  eviction: {
+    desc: "Know the exact steps your landlord must follow before you can be removed.",
+    dcStatute: "DC Code § 42-3505.01",
+    pgStatute: "MD Real Prop. § 8-401",
+  },
+  repairs_withholding: {
+    desc: "Document issues, request repairs in writing, and learn when you can withhold rent.",
+    dcStatute: "DC Code § 42-3405.07",
+    pgStatute: "MD Real Prop. § 8-211",
+  },
+  rent_fees: {
+    desc: "Understand what your landlord can legally charge and when increases are allowed.",
+    dcStatute: "DC Code § 42-3502",
+    pgStatute: "PG County Code § 13-176",
+  },
+  privacy_entry: {
+    desc: "Your landlord must give proper notice before entering — learn the rules.",
+  },
+  lease_contract: {
+    desc: "Review lease terms, renewals, and what clauses may be unenforceable.",
+  },
+  habitability: {
+    desc: "Mold, pests, no heat or hot water — your right to a safe, livable home.",
+    dcStatute: "DC Code § 42-3251",
+    pgStatute: "MD Real Prop. § 8-211",
+  },
+  rent_control: {
+    desc: "Find out if your unit is covered by rent stabilization rules.",
+    dcStatute: "DC Rental Housing Act",
+    pgStatute: "PG County Code § 13-173",
+  },
+  antidiscrimination: {
+    desc: "Protected classes, source-of-income rights, and how to file a complaint.",
+    dcStatute: "DC Human Rights Act",
+    pgStatute: "MD State Gov. § 20-601",
+  },
+  organizing_retaliation: {
+    desc: "Your landlord cannot punish you for reporting problems or organizing tenants.",
+    dcStatute: "DC Code § 42-3505.02",
+    pgStatute: "MD Real Prop. § 8-208.1",
+  },
+  relocation_buyouts: {
+    desc: "Know your rights if asked to leave for renovations or offered a buyout.",
+  },
+  registration_compliance: {
+    desc: "Check whether your landlord has the required licenses and registrations.",
+    dcStatute: "DC Code § 42-3502.05",
+    pgStatute: "PG County Code § 13-172",
+  },
+  enforcement_remedies: {
+    desc: "Agencies to contact, how to file complaints, and when to go to court.",
+  },
+};
+
+/** Lightweight markdown → JSX: handles **bold**, numbered lists, bullet lists, and paragraphs */
+function renderMarkdown(text: string): ReactNode {
+  const lines = text.split("\n");
+  const elements: ReactNode[] = [];
+  let key = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // blank line → spacer
+    if (line.trim() === "") {
+      elements.push(<div key={key++} className="h-2" />);
+      continue;
+    }
+
+    // numbered list item: "1. ", "2. ", etc.
+    const numMatch = line.match(/^(\d+)\.\s+(.*)/);
+    if (numMatch) {
+      elements.push(
+        <div key={key++} className="flex gap-2 ml-1 mb-0.5">
+          <span className="font-semibold text-slate-500 shrink-0">{numMatch[1]}.</span>
+          <span>{inlineMd(numMatch[2])}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // bullet list item: "- " or "• "
+    const bulletMatch = line.match(/^[-•]\s+(.*)/);
+    if (bulletMatch) {
+      elements.push(
+        <div key={key++} className="flex gap-2 ml-1 mb-0.5">
+          <span className="text-slate-400 shrink-0">•</span>
+          <span>{inlineMd(bulletMatch[1])}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // regular paragraph line
+    elements.push(<p key={key++} className="mb-1">{inlineMd(line)}</p>);
+  }
+
+  return <>{elements}</>;
 }
 
-function lawLabelForJurisdiction(j: Jurisdiction) {
-  return j === "dc" ? "Washington, D.C. law" : "Maryland / PG County law";
+/** Inline markdown: **bold** */
+function inlineMd(text: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) => {
+        const boldMatch = part.match(/^\*\*(.+)\*\*$/);
+        if (boldMatch) return <strong key={i} className="font-semibold">{boldMatch[1]}</strong>;
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+}
+
+function TopicCard({
+  topic,
+  onClick,
+  jurisdiction,
+}: {
+  topic: Topic;
+  onClick: (id: TopicCategoryId) => void;
+  jurisdiction: Jurisdiction;
+}) {
+  const urgent = topic.urgency === "urgent";
+  const meta = TOPIC_META[topic.id];
+  const statute = jurisdiction === "dc" ? meta?.dcStatute : meta?.pgStatute;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(topic.id)}
+      className={cx(
+        "group w-full rounded-xl border bg-white p-4 text-left transition-all duration-200",
+        "hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2",
+        urgent && "border-l-[3px] border-l-red-400 border-slate-200",
+        !urgent && "border-slate-200 hover:border-[#1e3a5f]/30"
+      )}
+      aria-label={`Open topic: ${topic.uiTitle}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 leading-tight">{topic.uiTitle}</h3>
+            {urgent && (
+              <span className="inline-flex items-center rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-bold text-red-600 uppercase tracking-wider">
+                Urgent
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">{meta?.desc || topic.uiDescription}</p>
+          {statute && (
+            <p className="text-[10px] text-slate-400 font-medium">{statute}</p>
+          )}
+        </div>
+        <ArrowRight className="w-4 h-4 text-slate-300 mt-1 shrink-0 transition group-hover:text-[#1e3a5f] group-hover:translate-x-0.5" />
+      </div>
+    </button>
+  );
 }
 
 const QUICK_PROMPTS = [
@@ -75,16 +239,6 @@ const QUICK_PROMPTS = [
 
 const DISCLAIMER =
   "I'm not a lawyer and this isn't legal advice. For advice on your specific situation, talk to a local tenant attorney or legal aid.";
-
-/* Extra display data for common topic cards */
-const TOPIC_CARD_META: Record<string, { description: string; citation?: string; urgencyColor?: "red" | "amber" }> = {
-  eviction: { description: "Court process, required notices, and how to respond to protect yourself", citation: "DC Code § 42-3505.01", urgencyColor: "red" },
-  repairs_withholding: { description: "How to request repairs, document issues, and use rent escrow", citation: "14 DCMR § 501", urgencyColor: "red" },
-  habitability: { description: "Mold, no heat, pests, lead paint — your right to a safe home", citation: "DC Code § 42-3405", urgencyColor: "red" },
-  rent_fees: { description: "What your landlord can charge, legal limits, and proper notice requirements", citation: "DC Code § 42-3502.08" },
-  privacy_entry: { description: "Required notice rules, harassment protections, and what to do" },
-  lease_contract: { description: "Illegal clauses, early termination, renewals, and lease changes", citation: "14 DCMR § 304" },
-};
 
 function TenantRightsContent() {
   const searchParams = useSearchParams();
@@ -159,8 +313,8 @@ function TenantRightsContent() {
         document.getElementById("chat-container")?.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
         detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        detailsRef.current?.focus({ preventScroll: false });
       }
+      detailsRef.current?.focus({ preventScroll: false });
     }, 50);
   }, []);
 
@@ -201,404 +355,335 @@ function TenantRightsContent() {
     }
   }, [question, jurisdiction, chatLoading, chatMessages, selectedTopic?.legalTitle, selectedTopicId]);
 
-  // ——— STEP 1: Jurisdiction gate (fullscreen feel) ———
+  // ——— STEP 1: Jurisdiction gate ———
   if (!jurisdiction) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-full max-w-2xl space-y-8">
-          <header className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">Where do you live?</h1>
-            <p className="text-muted-foreground">
-              Your rights depend on your location. Pick one to continue.
+      <div className="min-h-screen bg-white">
+        {/* Navy header */}
+        <div className="bg-gradient-to-br from-[#1e3a5f] via-[#1e3a5f] to-[#2d4a6f] text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+          <div className="relative max-w-3xl mx-auto px-6 py-16 text-center">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-sm font-medium backdrop-blur-sm">
+              <Scale className="w-3.5 h-3.5 text-blue-300" />
+              AI-Powered Rights Guide
+            </span>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mt-5" style={{ fontFamily: "'Instrument Serif', serif" }}>
+              Know Your Tenant Rights
+            </h1>
+            <p className="text-blue-200 text-base mt-3 max-w-xl mx-auto leading-relaxed">
+              Get step-by-step guidance for your rental situation. Choose your location to see the laws that protect you.
             </p>
-          </header>
+          </div>
+        </div>
 
+        {/* Jurisdiction cards */}
+        <div className="max-w-2xl mx-auto px-6 -mt-8 relative z-10">
           <div className="grid gap-4 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => handlePickJurisdiction("dc")}
-              className="rounded-2xl border-2 border-border p-6 text-left transition hover:border-primary/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="bg-white rounded-xl border border-slate-200 p-6 text-left transition-all hover:border-[#1e3a5f]/30 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2 group"
               aria-label="Select Washington, D.C."
             >
-              <div className="text-base font-semibold">Washington, D.C.</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Get DC-specific rules, steps, and agencies
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#1e3a5f]/5 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-[#1e3a5f]" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-300 ml-auto transition group-hover:text-[#1e3a5f] group-hover:translate-x-0.5" />
               </div>
+              <div className="text-base font-bold text-slate-900">Washington, D.C.</div>
+              <div className="mt-1 text-sm text-slate-500">DC-specific tenant protections, rent control, and agencies</div>
             </button>
             <button
               type="button"
               onClick={() => handlePickJurisdiction("pg")}
-              className="rounded-2xl border-2 border-border p-6 text-left transition hover:border-primary/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="bg-white rounded-xl border border-slate-200 p-6 text-left transition-all hover:border-[#1e3a5f]/30 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2 group"
               aria-label="Select Prince George's County, MD"
             >
-              <div className="text-base font-semibold">Prince George&apos;s County, MD</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Get Maryland/PG-specific rules and resources
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#1e3a5f]/5 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-[#1e3a5f]" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-300 ml-auto transition group-hover:text-[#1e3a5f] group-hover:translate-x-0.5" />
               </div>
+              <div className="text-base font-bold text-slate-900">Prince George&apos;s County, MD</div>
+              <div className="mt-1 text-sm text-slate-500">Maryland &amp; PG County tenant rules and resources</div>
             </button>
           </div>
         </div>
-      </main>
+
+        {/* Trust signals */}
+        <div className="flex flex-wrap items-center justify-center gap-5 mt-12 mb-12 text-xs text-slate-400 px-6">
+          {["Free for all tenants", "AI guidance, not legal advice", "Your data stays private"].map((t) => (
+            <span key={t} className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {t}
+            </span>
+          ))}
+        </div>
+      </div>
     );
   }
 
   // ——— STEP 2: Main page ———
+  const topicsToShow = showAllTopics ? allTopics : commonTopics;
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <MainNav />
-
-      {/* Dark branded header */}
-      <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] relative overflow-hidden">
+      {/* ═══ NAVY GRADIENT HEADER ═══ */}
+      <div className="bg-gradient-to-br from-[#1e3a5f] via-[#1e3a5f] to-[#2d4a6f] text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-
-        <div className="relative max-w-5xl mx-auto px-6 py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="relative max-w-6xl mx-auto px-6 py-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Link href="/" className="flex items-center gap-2 hover:opacity-90">
+                  <Shield className="h-5 w-5 text-blue-300" aria-hidden />
+                  <span className="text-sm font-semibold text-white/80">RentWise</span>
+                </Link>
+                <span className="text-white/30">|</span>
+                <span className="text-sm text-white/60">Tenant Rights</span>
+              </div>
               <h1 className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
-                Know your rights as a renter.
+                Get Help With Your Rental Problem
               </h1>
-              <p className="text-blue-200 mt-2 text-sm max-w-md">
-                Free legal guidance grounded in {jurisdiction === "dc" ? "DC" : "Maryland"} housing codes — not generic advice.
+              <p className="text-blue-200 text-sm mt-1.5 max-w-lg">
+                Choose a topic or describe your situation for step-by-step guidance.
               </p>
             </div>
 
-            {/* Jurisdiction selector — PRESERVES existing Change handler and state */}
-            <div className="flex items-center gap-2 bg-white/10 border border-white/15 rounded-lg px-4 py-2.5 backdrop-blur-sm flex-shrink-0">
-              <MapPin className="w-4 h-4 text-blue-300" />
+            {/* Jurisdiction pill */}
+            <div className="inline-flex items-center gap-3 rounded-xl bg-white/10 border border-white/15 px-4 py-2.5 text-sm backdrop-blur-sm self-start">
+              <MapPin className="h-4 w-4 shrink-0 text-blue-300" aria-hidden />
+              <span className="text-white font-medium">{labelForJurisdiction(jurisdiction)}</span>
+              <button
+                type="button"
+                onClick={handleChangeJurisdiction}
+                className="text-blue-300 hover:text-white text-xs font-medium underline underline-offset-2 hover:no-underline transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 rounded"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ MAIN TWO-COLUMN LAYOUT ═══ */}
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* ── LEFT COLUMN: Topics (3/5) ── */}
+          <div className="w-full lg:w-3/5">
+            {/* Topic details (shown when a topic is selected) */}
+            {selectedTopic && category && (
+              <div
+                ref={detailsRef}
+                tabIndex={-1}
+                className="bg-white rounded-xl border border-slate-200 p-6 mb-6 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2"
+                aria-label="Topic details"
+              >
+                <CategoryDetail
+                  category={category}
+                  jurisdiction={jurisdiction}
+                  onOpenChat={(prompt) => {
+                    if (prompt) setQuestion(prompt);
+                    document.getElementById("chat-container")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  scrollRef={undefined}
+                />
+              </div>
+            )}
+
+            {/* Topic heading */}
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <span className="text-sm font-semibold text-white">{shortLabelForJurisdiction(jurisdiction)}</span>
-                <button
-                  type="button"
-                  onClick={handleChangeJurisdiction}
-                  className="text-xs text-blue-300 hover:text-white ml-2 underline underline-offset-2 transition-colors"
-                >
-                  Change
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-[11px] text-blue-300/50 mt-3">
-            Answers based on {jurisdiction === "dc" ? "DC" : "Maryland"} housing law · Not legal advice · Always free
-          </p>
-        </div>
-      </div>
-
-      {/* Value strip — what you'll get */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <span className="text-sm text-slate-700 font-medium">Step-by-step guidance for your situation</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                <Scale className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <span className="text-sm text-slate-700 font-medium">Relevant laws and statutes cited</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center">
-                <FileText className="w-3.5 h-3.5 text-violet-600" />
-              </div>
-              <span className="text-sm text-slate-700 font-medium">Template letters and next actions</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
-                <Phone className="w-3.5 h-3.5 text-amber-600" />
-              </div>
-              <span className="text-sm text-slate-700 font-medium">Agencies and resources to contact</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Two-column layout */}
-      <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-5 gap-8">
-
-        {/* LEFT — Topics (3 cols) */}
-        <div className="lg:col-span-3 order-2 lg:order-1">
-          <h2 className="text-lg font-bold text-slate-900">Common problems</h2>
-          <p className="text-sm text-slate-500 mt-1">Pick your situation for step-by-step guidance specific to {shortLabelForJurisdiction(jurisdiction)}.</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-            {commonTopics.map((topic) => {
-              const meta = TOPIC_CARD_META[topic.id];
-              const isUrgent = topic.urgency === "urgent";
-              const urgencyColor = meta?.urgencyColor;
-              const borderClass = urgencyColor === "red"
-                ? "border-red-200 border-l-[3px] border-l-red-400 hover:border-red-300"
-                : urgencyColor === "amber"
-                  ? "border-amber-200 border-l-[3px] border-l-amber-400 hover:border-amber-300"
-                  : "border-slate-200 hover:border-slate-300";
-              const arrowHover = urgencyColor === "red"
-                ? "group-hover:text-red-500"
-                : urgencyColor === "amber"
-                  ? "group-hover:text-amber-500"
-                  : "group-hover:text-slate-500";
-              const badgeBg = urgencyColor === "red"
-                ? "bg-red-50 text-red-600 border-red-200"
-                : "bg-amber-50 text-amber-600 border-amber-200";
-
-              return (
-                <button
-                  key={topic.id}
-                  type="button"
-                  onClick={() => handleSelectTopic(topic.id)}
-                  className={cx(
-                    "bg-white border rounded-xl p-4 text-left cursor-pointer hover:shadow-md transition-all group",
-                    borderClass
-                  )}
-                  aria-label={`Open topic: ${topic.uiTitle}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900">{topic.uiTitle}</h3>
-                    <ArrowRight className={cx("w-4 h-4 text-slate-300 group-hover:translate-x-0.5 transition-all", arrowHover)} />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1.5">{meta?.description ?? topic.uiDescription}</p>
-                  <div className="flex items-center gap-2 mt-2.5">
-                    {isUrgent && (
-                      <span className={cx("text-[9px] font-bold px-2 py-0.5 rounded-full border", badgeBg)}>URGENT</span>
-                    )}
-                    {meta?.citation && (
-                      <span className="text-[9px] text-slate-400">{meta.citation}</span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* See all topics — PRESERVES toggle handler */}
-          <button
-            type="button"
-            onClick={() => setShowAllTopics((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-sm text-[#2563eb] hover:text-blue-700 font-semibold mt-5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
-            aria-expanded={showAllTopics}
-          >
-            {showAllTopics ? "Hide all topics" : "See all topics"} <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-
-          {showAllTopics && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {allTopics.map((topic) => {
-                const meta = TOPIC_CARD_META[topic.id];
-                const isUrgent = topic.urgency === "urgent";
-                const urgencyColor = meta?.urgencyColor;
-                const borderClass = urgencyColor === "red"
-                  ? "border-red-200 border-l-[3px] border-l-red-400 hover:border-red-300"
-                  : urgencyColor === "amber"
-                    ? "border-amber-200 border-l-[3px] border-l-amber-400 hover:border-amber-300"
-                    : "border-slate-200 hover:border-slate-300";
-                const arrowHover = urgencyColor === "red"
-                  ? "group-hover:text-red-500"
-                  : urgencyColor === "amber"
-                    ? "group-hover:text-amber-500"
-                    : "group-hover:text-slate-500";
-                const badgeBg = urgencyColor === "red"
-                  ? "bg-red-50 text-red-600 border-red-200"
-                  : "bg-amber-50 text-amber-600 border-amber-200";
-
-                return (
-                  <button
-                    key={topic.id}
-                    type="button"
-                    onClick={() => handleSelectTopic(topic.id)}
-                    className={cx(
-                      "bg-white border rounded-xl p-4 text-left cursor-pointer hover:shadow-md transition-all group",
-                      borderClass
-                    )}
-                    aria-label={`Open topic: ${topic.uiTitle}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-slate-900">{topic.uiTitle}</h3>
-                      <ArrowRight className={cx("w-4 h-4 text-slate-300 group-hover:translate-x-0.5 transition-all", arrowHover)} />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1.5">{meta?.description ?? topic.uiDescription}</p>
-                    <div className="flex items-center gap-2 mt-2.5">
-                      {isUrgent && (
-                        <span className={cx("text-[9px] font-bold px-2 py-0.5 rounded-full border", badgeBg)}>URGENT</span>
-                      )}
-                      {meta?.citation && (
-                        <span className="text-[9px] text-slate-400">{meta.citation}</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT — Chat (2 cols, sticky) */}
-        <div className="lg:col-span-2 order-1 lg:order-2">
-          <div className="lg:sticky lg:top-20">
-
-            {/* Chat card */}
-            <section
-              ref={helpSectionRef}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
-              aria-labelledby="help-heading"
-              id="chat-container"
-            >
-              {/* Chat header */}
-              <div className="flex items-center gap-2.5 px-5 py-3.5 bg-slate-50 border-b border-slate-200">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div>
-                  <div id="help-heading" className="text-sm font-bold text-slate-800">Rights Assistant</div>
-                  <div className="text-[10px] text-slate-500">AI-powered · {lawLabelForJurisdiction(jurisdiction)}</div>
-                </div>
-                <span className="ml-auto text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">FREE</span>
-              </div>
-
-              {/* Disclaimer — compact */}
-              <div className="flex items-start gap-2 px-4 py-2 bg-amber-50/50 border-b border-amber-100/50">
-                <AlertCircle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] text-amber-600 leading-relaxed">
-                  Not legal advice. For your specific situation, consult a local tenant attorney or legal aid.
+                <h2 className="text-lg font-bold text-slate-900" style={{ fontFamily: "'Instrument Serif', serif" }}>
+                  {showAllTopics ? "All Topics" : "Common Problems"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Pick what matches your situation for steps specific to {jurisdiction === "dc" ? "D.C." : "PG County"}.
                 </p>
               </div>
-
-              {/* Response area — PRESERVES existing AI response rendering */}
-              <div
-                ref={chatScrollRef}
-                className="h-[300px] overflow-y-auto px-5 py-4 space-y-4"
+              <button
+                type="button"
+                onClick={() => setShowAllTopics((v) => !v)}
+                className="text-xs text-[#2563eb] font-semibold hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2 rounded"
+                aria-expanded={showAllTopics}
               >
-                {chatMessages.length === 0 && !chatLoading && (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center">
-                      <Scale className="w-6 h-6 text-slate-300" />
+                {showAllTopics ? "Show common" : "See all topics"}
+              </button>
+            </div>
+
+            {/* Topic cards grid */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {topicsToShow.map((t) => (
+                <TopicCard key={t.id} topic={t} onClick={handleSelectTopic} jurisdiction={jurisdiction} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── RIGHT COLUMN: Chat (2/5) ── */}
+          <div className="w-full lg:w-2/5" id="chat-container">
+            <div className="lg:sticky lg:top-6">
+              <section
+                ref={helpSectionRef}
+                className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm"
+                aria-labelledby="help-heading"
+              >
+                {/* Chat header */}
+                <div className="bg-[#1e3a5f] px-5 py-4">
+                  <h2 id="help-heading" className="text-base font-bold text-white flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-blue-300" aria-hidden />
+                    Rights Assistant
+                  </h2>
+                  <p className="mt-0.5 text-xs text-blue-200/80">
+                    Describe your situation for step-by-step guidance
+                  </p>
+                </div>
+
+                {/* Disclaimer bar */}
+                <div className="px-4 py-2 flex items-start gap-2 border-b border-slate-100 bg-amber-50/60">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" aria-hidden />
+                  <p className="text-[10px] text-amber-700/80 leading-relaxed">{DISCLAIMER}</p>
+                </div>
+
+                {/* Messages area */}
+                <div
+                  ref={chatScrollRef}
+                  className="flex flex-col min-h-[240px] max-h-[400px] overflow-y-auto p-4 space-y-4"
+                >
+                  {chatMessages.length === 0 && !chatLoading && (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                        <MessageCircle className="w-5 h-5 text-slate-400" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-700">Ask about your rights</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-[220px]">
+                        Describe your problem or pick a prompt below to get started.
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-600 mt-3">Ask about your situation</p>
-                    <p className="text-xs text-slate-400 mt-1 max-w-[220px] leading-relaxed">
-                      Describe what&apos;s happening. I&apos;ll give you your rights, next steps, and the specific law that applies.
-                    </p>
-                  </div>
-                )}
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={cx(
-                      "flex",
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    )}
-                  >
+                  )}
+                  {chatMessages.map((msg, i) => (
                     <div
+                      key={i}
                       className={cx(
-                        "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
-                        msg.role === "user"
-                          ? "rounded-br-md bg-[#1e3a5f] text-white"
-                          : "rounded-bl-md bg-slate-50 border border-slate-200"
+                        "flex",
+                        msg.role === "user" ? "justify-end" : "justify-start"
                       )}
                     >
-                      {msg.role === "assistant" && (
-                        <span className="block text-xs font-medium text-slate-400 mb-1.5">Rights Assistant</span>
-                      )}
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                      <div
+                        className={cx(
+                          "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+                          msg.role === "user"
+                            ? "rounded-br-md bg-[#1e3a5f] text-white"
+                            : "rounded-bl-md bg-slate-100 border border-slate-200 text-slate-800"
+                        )}
+                      >
+                        {msg.role === "assistant" && (
+                          <span className="block text-[10px] font-semibold text-slate-500 mb-1">Rights Assistant</span>
+                        )}
+                        <div className="whitespace-pre-wrap">
+                          {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {chatLoading && (
-                  <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-md bg-slate-50 border border-slate-200 px-4 py-2.5 text-sm text-slate-400">
-                      Thinking…
+                  ))}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="rounded-2xl rounded-bl-md bg-slate-100 border border-slate-200 px-4 py-2.5 text-sm text-slate-500">
+                        <span className="inline-flex gap-1">
+                          <span className="animate-pulse">Thinking</span>
+                          <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>.</span>
+                          <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>.</span>
+                          <span className="animate-bounce" style={{ animationDelay: "0.3s" }}>.</span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Prompt chips — PRESERVES all handlers */}
-              <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50">
-                <div className="flex flex-wrap gap-1.5">
+                {/* Quick prompt chips */}
+                <div className="px-4 pt-2.5 pb-2 flex flex-wrap gap-1.5 border-t border-slate-100">
                   {QUICK_PROMPTS.map((chip) => (
                     <button
                       key={chip}
                       type="button"
-                      className="text-[11px] text-slate-600 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors font-medium"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-600 font-medium transition hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-1"
                       onClick={() => setQuestion((prev) => (prev ? prev + " " + chip : chip))}
                     >
                       {chip}
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Input area — PRESERVES existing textarea and submit handler */}
-              <div className="px-4 py-3 border-t border-slate-200 bg-white">
-                <div className="flex gap-2">
-                  <textarea
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder={chatMessages.length > 0 ? "Type a follow-up…" : "Describe your problem. Include dates and what you want to happen."}
-                    className="flex-1 resize-none border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all min-h-[44px] max-h-[100px]"
-                    aria-label="Your message"
-                    disabled={chatLoading}
-                    rows={chatMessages.length > 0 ? 1 : 2}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        startChat();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={startChat}
-                    disabled={!question.trim() || chatLoading}
-                    className="self-end bg-[#1e3a5f] hover:bg-[#162d4a] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Send"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    {chatMessages.length === 0 ? "Get Help" : "Send"}
-                  </button>
+                {/* Input area */}
+                <div className="p-4 border-t border-slate-100 bg-white">
+                  <div className="flex gap-2 items-end">
+                    <textarea
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          startChat();
+                        }
+                      }}
+                      placeholder={chatMessages.length > 0 ? "Type a follow-up..." : "Describe your problem..."}
+                      className="min-h-[44px] max-h-32 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:border-[#1e3a5f]/30 disabled:opacity-50 resize-none transition"
+                      aria-label="Your message"
+                      disabled={chatLoading}
+                      rows={chatMessages.length > 0 ? 1 : 2}
+                    />
+                    <button
+                      type="button"
+                      onClick={startChat}
+                      disabled={!question.trim() || chatLoading}
+                      className="shrink-0 rounded-xl bg-[#1e3a5f] px-4 py-2.5 text-white hover:bg-[#162d4a] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center gap-2 h-[44px] transition-colors"
+                      aria-label="Send"
+                    >
+                      <Send className="h-4 w-4" aria-hidden />
+                      <span className="text-sm font-medium">{chatMessages.length === 0 ? "Get Help" : "Send"}</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              {/* "What you'll get" info box */}
+              <div className="mt-4 bg-white rounded-xl border border-slate-200 p-4">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-[#1e3a5f]" />
+                  What you&apos;ll get
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    "Step-by-step guidance for your specific situation",
+                    "Relevant laws and statutes for your jurisdiction",
+                    "Template letters and next actions",
+                    "Agencies and resources to contact",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                      <span className="text-xs text-slate-500">{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </section>
-
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Topic details — full width below the grid */}
-      {selectedTopic && category && (
-        <section className="max-w-5xl mx-auto px-6 pb-8">
-          <div
-            ref={detailsRef}
-            tabIndex={-1}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            aria-label="Topic details"
-          >
-            <CategoryDetail
-              category={category}
-              jurisdiction={jurisdiction}
-              onOpenChat={(prompt) => {
-                if (prompt) setQuestion(prompt);
-                helpSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              scrollRef={undefined}
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Footer disclaimer */}
-      <div className="border-t border-slate-100 py-6 px-6">
-        <p className="text-[11px] text-slate-400 text-center max-w-2xl mx-auto leading-relaxed">
-          RentWise provides AI-powered legal information for educational purposes only. Not legal advice. Not an attorney-client relationship. Based on DC and Maryland housing codes as of February 2026. Consult a licensed attorney for specific situations.
-        </p>
-      </div>
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-6">
+        <div className="max-w-6xl mx-auto px-6 text-center text-xs text-slate-400">
+          This information is for educational purposes only and does not constitute legal advice. Verify with a licensed attorney or legal aid.
+        </div>
+      </footer>
     </div>
   );
 }
 
 export default function TenantRightsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading…</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
       <TenantRightsContent />
     </Suspense>
   );
