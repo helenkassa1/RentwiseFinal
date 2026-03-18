@@ -32,14 +32,14 @@ const signInOptions = [
 function StaticNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <nav className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4">
+    <nav className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-lg">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-            <Shield className="h-7 w-7" aria-hidden />
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
+            <Shield className="h-6 w-6" aria-hidden />
             RentWise
           </Link>
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-5">
             {navLinks.map((l) => (
               <Link key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                 {l.label}
@@ -47,7 +47,7 @@ function StaticNav() {
             ))}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
+                <Button variant="ghost" size="sm">
                   Sign In <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -59,7 +59,7 @@ function StaticNav() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild>
+            <Button asChild size="sm">
               <Link href="/signup">Create Account</Link>
             </Button>
           </div>
@@ -101,15 +101,15 @@ function MainNavWithClerk() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4">
+    <nav className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-lg">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-            <Shield className="h-7 w-7" aria-hidden />
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
+            <Shield className="h-6 w-6" aria-hidden />
             RentWise
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-5">
             {navLinks.map((l) => (
               <Link key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                 {l.label}

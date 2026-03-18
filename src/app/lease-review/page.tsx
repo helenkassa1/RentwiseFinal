@@ -24,6 +24,11 @@ import {
   Redo2,
   Pencil,
   Check as CheckIcon,
+  FileSearch,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  Shield,
 } from "lucide-react";
 import {
   AIPreAnalysisDisclaimer,
@@ -340,30 +345,67 @@ export default function PublicLeaseReviewPage() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <MainNav />
 
-        <div className="container mx-auto max-w-4xl px-4 py-12">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">AI Lease Review</h1>
-            <p className="mt-2 text-muted-foreground">
-              Upload a PDF or Word lease, or paste text. RentWise AI flags prohibited clauses, risky language, and missing disclosures for DC, Maryland, and Prince George&apos;s County.
+        {/* Dark header — matches lease review results page */}
+        <div className="bg-gradient-to-br from-[#1e3a5f] via-[#1e3a5f] to-[#2d4a6f] relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+
+          <div className="relative max-w-3xl mx-auto px-6 py-14 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/80 text-sm font-medium mb-5">
+              <FileSearch className="w-3.5 h-3.5 text-blue-300" />
+              AI-Powered Analysis
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
+              AI Lease Review
+            </h1>
+            <p className="text-blue-200 text-base mt-3 max-w-lg mx-auto leading-relaxed">
+              Upload a PDF or Word lease, or paste text. RentWise flags prohibited clauses, risky language, and missing disclosures for DC, Maryland, and Prince George&apos;s County.
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              One free review — <Link href="/sign-up" className="text-primary hover:underline">create an account</Link> for unlimited access.
+            <p className="text-blue-300/60 text-sm mt-3">
+              One free review — <Link href="/sign-up" className="text-blue-300 hover:text-white underline underline-offset-2 transition-colors">create an account</Link> for unlimited access.
             </p>
           </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload or paste your lease</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!hasAcknowledged ? (
-                <AIPreAnalysisDisclaimer onAcknowledge={() => setHasAcknowledged(true)} />
-              ) : (
-                <>
-                  <div>
-                    <label className="text-sm font-medium">Jurisdiction</label>
+        {/* Upload area — overlaps header */}
+        <div className="max-w-2xl mx-auto px-6 -mt-8 relative z-10 pb-20">
+
+          {/* Main upload card */}
+          <div className="bg-white rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-200 overflow-hidden">
+
+            {/* Disclaimer gate — shown before upload form */}
+            {!hasAcknowledged ? (
+              <div className="p-8">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <Scale className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-bold text-slate-900">AI Analysis Disclaimer</h4>
+                    <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">
+                      This analysis is powered by AI and is for <span className="font-semibold text-slate-700">informational purposes only</span>. It does not constitute legal advice from a licensed attorney. Results should be verified by a qualified legal professional.
+                    </p>
+                    <button
+                      onClick={() => setHasAcknowledged(true)}
+                      className="mt-4 inline-flex items-center gap-2 bg-[#1e3a5f] hover:bg-[#162d4a] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all"
+                    >
+                      I Understand — Proceed
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Upload section */}
+                <div className="p-8">
+                  <h2 className="text-base font-bold text-slate-900">Upload or paste your lease</h2>
+                  <p className="text-sm text-slate-500 mt-1">Supports PDF, Word (.docx), and plain text</p>
+
+                  {/* Jurisdiction selector */}
+                  <div className="mt-5">
+                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Jurisdiction</label>
                     <select
-                      className="mt-1 flex h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+                      className="mt-1.5 flex h-10 w-full rounded-xl border border-slate-200 px-3 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all"
                       value={jurisdiction}
                       onChange={(e) => setJurisdiction(e.target.value)}
                     >
@@ -372,13 +414,17 @@ export default function PublicLeaseReviewPage() {
                       <option value="pg_county">Prince George&apos;s County</option>
                     </select>
                   </div>
+
+                  {/* Drop zone — PRESERVES existing file upload handler */}
                   <div
-                    className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 p-6 transition-colors hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className="mt-5 border-2 border-dashed border-slate-200 rounded-xl p-10 text-center hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-300 cursor-pointer group"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm font-medium">Upload lease (PDF or Word)</p>
-                    <p className="text-xs text-muted-foreground">.pdf, .doc, .docx</p>
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mx-auto transition-colors">
+                      <Upload className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700 mt-4">Drop your lease here, or click to browse</p>
+                    <p className="text-xs text-slate-400 mt-1.5">PDF, DOCX, or TXT · Max 10MB</p>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -388,54 +434,105 @@ export default function PublicLeaseReviewPage() {
                       disabled={isExtracting}
                     />
                     {isExtracting && (
-                      <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-blue-600">
                         <Loader2 className="h-3 w-3 animate-spin" /> Extracting text…
                       </p>
                     )}
                   </div>
+
                   {extractError && (
-                    <p className="rounded-md bg-red-50 dark:bg-red-950/30 p-2 text-sm text-red-700 dark:text-red-300">{extractError}</p>
+                    <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700 border border-red-100">{extractError}</p>
                   )}
-                  <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs text-muted-foreground">or paste lease text</span>
-                    <div className="h-px flex-1 bg-border" />
+
+                  {/* Or divider */}
+                  <div className="flex items-center gap-4 my-5">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">or paste text</span>
+                    <div className="flex-1 h-px bg-slate-200" />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Lease text</label>
-                    <textarea
-                      className="mt-1 min-h-[300px] w-full rounded-md border p-3 text-sm bg-background"
-                      placeholder="Paste the full text of your lease here..."
-                      value={leaseText}
-                      onChange={(e) => setLeaseText(e.target.value)}
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">{leaseText.length} characters (min 100)</p>
+
+                  {/* Text paste area — PRESERVES existing textarea handler */}
+                  <textarea
+                    className="w-full h-32 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all"
+                    placeholder="Paste your lease text here..."
+                    value={leaseText}
+                    onChange={(e) => setLeaseText(e.target.value)}
+                  />
+                  <p className="mt-1.5 text-xs text-slate-400">{leaseText.length} characters (min 100)</p>
+                </div>
+
+                {/* Disclaimer + Privacy — compact, inside the card */}
+                <div className="bg-slate-50 border-t border-slate-200 px-8 py-5 space-y-3">
+                  {/* AI Disclaimer */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Scale className="w-3.5 h-3.5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-700">AI Analysis Disclaimer</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        This analysis is for <span className="font-semibold text-slate-600">informational purposes only</span>. It does not constitute legal advice and does not create an attorney-client relationship. Verify results with a qualified legal professional.
+                      </p>
+                    </div>
                   </div>
-                  <Button
+
+                  {/* Privacy */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Shield className="w-3.5 h-3.5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-700">Your privacy matters</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        Documents are processed securely and encrypted in transit. Not shared with third parties. Delete anytime from account settings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA Button — PRESERVES existing click handler */}
+                <div className="px-8 py-5 bg-white border-t border-slate-100">
+                  <button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing || leaseText.length < 100}
-                    className="w-full"
+                    className="w-full flex items-center justify-center gap-2 bg-[#1e3a5f] hover:bg-[#162d4a] text-white font-semibold py-3.5 rounded-xl text-sm transition-all active:scale-[0.99] shadow-lg shadow-[#1e3a5f]/15 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                   >
                     {isAnalyzing ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing…</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing…</>
                     ) : (
-                      <>Analyze lease <ArrowRight className="ml-2 h-4 w-4" /></>
+                      <><Sparkles className="w-4 h-4" /> Analyze My Lease</>
                     )}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <footer className="border-t py-6 mt-12">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-xs text-muted-foreground">
-              <Scale className="mr-1 inline h-3 w-3" />
-              RentWise AI provides compliance guidance, not legal advice. Consult a licensed attorney for legal decisions.
-            </p>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </footer>
+
+          {/* What to expect — below the card */}
+          <div className="mt-8 grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mx-auto">
+                <XCircle className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-xs font-semibold text-slate-800 mt-2.5">Prohibited Clauses</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Illegal waivers, self-help eviction terms, excessive fees</p>
+            </div>
+            <div className="text-center">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <p className="text-xs font-semibold text-slate-800 mt-2.5">Missing Disclosures</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Lead paint, mold, flood zone, and other required notices</p>
+            </div>
+            <div className="text-center">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+              <p className="text-xs font-semibold text-slate-800 mt-2.5">Suggested Fixes</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Compliant replacement language with legal citations</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
