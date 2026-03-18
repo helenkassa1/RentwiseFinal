@@ -139,6 +139,27 @@ function MainNavWithClerk() {
               </>
             ) : (
               <div className="flex items-center gap-2">
+                {/* Plan badge */}
+                {user?.publicMetadata?.role === "tenant" && (
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Tenant
+                  </span>
+                )}
+                {user?.publicMetadata?.role === "landlord" && user?.publicMetadata?.plan === "free" && (
+                  <Link href="/pricing" className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                    Free Plan ↑
+                  </Link>
+                )}
+                {user?.publicMetadata?.plan === "pro" && (
+                  <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-200">
+                    Pro
+                  </span>
+                )}
+                {user?.publicMetadata?.plan === "pm" && (
+                  <span className="text-[10px] font-bold bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full border border-violet-200">
+                    PM
+                  </span>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost">

@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { db } from "@/lib/db";
 import { legalStatutes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -10,48 +10,30 @@ import { eq } from "drizzle-orm";
 // AI Client - Anthropic Primary, OpenAI Fallback
 // ============================================
 
-/**
- * Read a key from .env.local directly as a fallback.
- * Needed because an empty system-level env var (e.g. ANTHROPIC_API_KEY=)
- * shadows the .env.local value — Next.js / dotenv won't override it.
- */
-function readEnvLocal(varName: string): string | undefined {
+// Read env vars from .env.local as fallback when Next.js doesn't inject them
+// (workaround for Turbopack workspace root issues with git worktrees)
+function readEnvLocal(key: string): string | undefined {
+  const fromEnv = process.env[key];
+  if (fromEnv && fromEnv.trim()) return fromEnv;
   try {
-    const envPath = path.resolve(process.cwd(), ".env.local");
-    const content = fs.readFileSync(envPath, "utf8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("#") || !trimmed.includes("=")) continue;
-      const eqIdx = trimmed.indexOf("=");
-      const key = trimmed.slice(0, eqIdx).trim();
-      if (key === varName) {
-        const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
-        return val || undefined;
-      }
-    }
+    const envPath = join(process.cwd(), ".env.local");
+    const content = readFileSync(envPath, "utf8");
+    const match = content.match(new RegExp(`^${key}=(.+)$`, "m"));
+    return match?.[1]?.trim() || undefined;
   } catch {
-    // .env.local not found (e.g. production) — that's fine
+    return undefined;
   }
-  return undefined;
-}
-
-function getEnvKey(varName: string): string | undefined {
-  const val = process.env[varName];
-  if (val && val.trim() !== "") return val.trim();
-  // Fallback: read directly from .env.local in case system env shadows it
-  return readEnvLocal(varName);
 }
 
 // Lazy init so build succeeds when env vars are not set (e.g. Vercel build)
-function getAnthropic(): Anthropic | null {
-  const key = getEnvKey("ANTHROPIC_API_KEY");
-  if (!key) return null;
-  return new Anthropic({ apiKey: key });
+function getAnthropic() {
+  const apiKey = readEnvLocal("ANTHROPIC_API_KEY") ?? "";
+  return new Anthropic({ apiKey });
 }
 
 function getOpenAI(): OpenAI | null {
-  const key = getEnvKey("OPENAI_API_KEY");
-  if (!key) return null;
+  const key = readEnvLocal("OPENAI_API_KEY");
+  if (!key || key.trim() === "") return null;
   return new OpenAI({ apiKey: key });
 }
 
@@ -73,35 +55,28 @@ export async function callAI(
   const temperature = options?.temperature ?? 0.2; // Low temp for legal accuracy
 
   // Try Anthropic first
-  const anthropic = getAnthropic();
-  if (anthropic) {
-    try {
-      const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: maxTokens,
-        temperature,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
-      });
+  try {
+    const anthropic = getAnthropic();
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    });
 
-      const textContent = response.content.find((c) => c.type === "text");
-      if (!textContent || textContent.type !== "text") {
-        throw new Error("No text content in Anthropic response");
-      }
-
-      return {
-        content: textContent.text,
-        model: "claude-sonnet-4-20250514",
-        provider: "anthropic",
-      };
-    } catch (error) {
-      console.error("Anthropic API error, falling back to OpenAI:", error);
+    const textContent = response.content.find((c) => c.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text content in Anthropic response");
     }
-  } else {
-    console.warn("ANTHROPIC_API_KEY not set, skipping Anthropic, trying OpenAI...");
-  }
 
-  {
+    return {
+      content: textContent.text,
+      model: "claude-sonnet-4-20250514",
+      provider: "anthropic",
+    };
+  } catch (error) {
+    console.error("Anthropic API error, falling back to OpenAI:", error);
 
     // Fallback to OpenAI (only if key is set)
     const openai = getOpenAI();
